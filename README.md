@@ -74,7 +74,7 @@ Interactive question answering:
 python -m rag.pipeline
 ```
 
-**(TO-DO)** Retrieval only, showing which chunks are returned and their re-ranking relevance scores, without calling the
+Retrieval only, showing which chunks are returned and their re-ranking relevance scores, without calling the
 language model:
 
 ```bash
