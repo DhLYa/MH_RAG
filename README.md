@@ -17,11 +17,11 @@ December 2010 release, and went on to reach 4.8 million units in Japan. As of 20
 had sold 4.9 million copies, despite never receiving a Western release.
 
 Sources:
-  [1] Monster_Hunter_Portable_3rd   relevance=0.9023
-  [2] Monster_Hunter_Freedom_Unite   relevance=0.8438
-  [3] Monster_Hunter_Freedom_Unite   relevance=0.8125
-  [4] Monster_Hunter   relevance=0.6719
-  [5] Monster_Hunter_Freedom_2   relevance=0.6484
+  [1] Monster_Hunter_Portable_3rd    relevance=0.9258
+  [2] Monster_Hunter_Freedom_Unite   relevance=0.8398
+  [3] Monster_Hunter_Freedom_Unite   relevance=0.7891
+  [4] Monster_Hunter                 relevance=0.6562
+  [5] Monster_Hunter_Freedom_2       relevance=0.6328
 ```
 
 <!-- Sources:
