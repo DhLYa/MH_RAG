@@ -20,7 +20,7 @@ def ingest() -> Chroma:
     print(f"Loaded {len(documents)} documents.")
 
     chunks = chunk_documents(documents)
-    print(f"split documents in {len(chunks)} chunks.")
+    print(f"split documents into {len(chunks)} chunks.")
 
     store = get_vector_store()
     added = upsert_chunks(store, chunks)
