@@ -162,10 +162,6 @@ separate metrics for retrieval and generation quality. The main blocker is cost:
 uses an LLM as judge, and the number of calls required sits above Gemini's free-tier
 rate limit. Implementing this would be also be time-intensive.
 
-**Editing an article leaves stale chunks.** Content-hash IDs mean modified text produces
-new chunks while the old versions remain in the store. The corpus is append-mostly, so
-this has not mattered, but a periodic full rebuild would be needed for an evolving corpus.
-
 **No test coverage.** A `test_pipeline.py` covering each component in isolation would
 verify that loading, chunking, ID generation, and context formatting behave as expected,
 and would catch regressions in the pure-logic parts without requiring API calls.
