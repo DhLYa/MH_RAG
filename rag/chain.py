@@ -23,6 +23,8 @@ def build_prompt() -> ChatPromptTemplate:
     Use the following pieces of context to answer the question at the end.
     If you don't know the answer, say that you don't know.
     Reformat the answer as appropriate and do not use Markdown formatting.
+    Answer only the question asked, add extra information only if highly relevant.
+    Answers should be strictly gameplay related unless asked otherwise. 
     Context: {context}
     Question: {question}
     """)
