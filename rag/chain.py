@@ -8,7 +8,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from .config import LLM_MODEL
 
 def get_llm():
-    llm = ChatGoogleGenerativeAI(model=LLM_MODEL, temperature=0)
+    llm = ChatGoogleGenerativeAI(model=LLM_MODEL)
     return llm
 
 def format_docs(docs: list[Document]) -> str:
