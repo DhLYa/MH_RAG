@@ -1,8 +1,9 @@
 # Monster Hunter RAG
 
 A retrieval-augmented generation pipeline that answers questions about the Monster Hunter
-game series using a corpus built from wikipedia articles converted to JSON files via the Wikipedia API. Questions are answered only from the retrieved source material, so the system cites where each answer came from and says
-"I don't know" rather than falling back on the language model's own knowledge.
+game series using a corpus built from wikipedia articles, and content from the [Monster Hunter Wiki](https://monsterhunterwiki.org/wiki/Main_Page).
+Questions are answered only from the retrieved source material, so the system cites where each
+answer came from and says "I don't know" rather than falling back on the language model's own knowledge.
 
 Built with LangChain, Voyage AI embeddings and reranking, Chroma as a persistent vector
 store, and Gemini 3.5-flash for free generation.
@@ -24,10 +25,6 @@ Sources:
   [5] Monster_Hunter_Freedom_2       relevance=0.6328
 ```
 
-<!-- Sources:
-  Monster_Hunter_Portable_3rd    relevance 0.8[XX]
-  Monster_Hunter                 relevance 0.7[XX] -->
-
 ## Pipeline
 
 ```
@@ -42,25 +39,14 @@ Wikipedia API
 
 ## Problems worth describing
 
-### Section headings were causing identical hashing
+### Empty section headings polluted the corpus
+Write-up pending. Summary: bare heading lines became content-free chunks in both
+corpora; fixed at scrape time using HTML tag structure rather than text heuristics
 
-Wikipedia API text marks sections with a bare heading on its own line rather than with
-wiki markup. `RecursiveCharacterTextSplitter` splits on blank lines first, so a heading
-landing on a chunk boundary became its own chunk containing nothing but the word
-`Gameplay` or `Launch`.
-
-~200 of ~2000 chunks (10%) were degenerate fragments under 80 characters. These carried no
-information, consumed embedding tokens, and surfaced in retrieval as false matches
-that displaced chunks actually containing answers.
-
-Chunk IDs are SHA-256 hashes of source and content, so two identical headings in the same
-article hashed identically and Chroma rejected the batch with a duplicate-ID error. Articles
-covering multiple products were what triggered this: `Monster_Hunter_Tri` documents both Tri and
-3 Ultimate, `PlayStation` covers several console revisions, each with repeated section
-names.
-
-Filtering chunks below 80 characters removed all fragments and eliminated the ID
-collisions as a side effect.
+### Duplicate chunk IDs rejected on ingestion
+Write-up pending. Summary: content-hash IDs collide when a page repeats a
+paragraph verbatim; ingestion now deduplicates within the batch as well as
+against the store.
 
 ## Setup
 
@@ -75,8 +61,8 @@ VOYAGE_API_KEY=your_key
 GOOGLE_API_KEY=your_key
 ```
 
-Both have usable free tiers: 
-- Voyage provides 200 million free tokens for embedding and re-ranking, much more than required in this project (2.3% used)
+Both have usable free tiers:
+- Voyage provides 200 million free tokens for embedding and reranking. Building the full vector store costs ~620k tokens with `voyage-4-large`, 0.3% of the allowance, so it can be rebuilt many times over at no cost.
 - Gemini's 3.5-flash free tier is rate limited, so use `--retrieval-only`
 (below) when iterating on retrieval.
 
@@ -88,7 +74,7 @@ Interactive question answering:
 python -m rag.pipeline
 ```
 
-Retrieval only, showing which chunks are returned and their re-ranking relevance scores, without calling the
+**(TO-DO)** Retrieval only, showing which chunks are returned and their re-ranking relevance scores, without calling the
 language model:
 
 ```bash
@@ -113,22 +99,43 @@ tests/              unit tests for the pure-logic components
 
 ## Data
 
-The corpus is currently 33 English Wikipedia articles covering the Monster Hunter series, its
-individual titles and spin-offs, the consoles they released on, and a list of best-selling
-video games. Text is fetched via the Wikipedia API rather than scraped or extracted from
-PDFs, which avoids the table-mangling and reference-section noise that PDF extraction
-introduces. Reference, External links, and See also sections are stripped at fetch time.
+The corpus is composed from two sources totalling 502 documents. Pages from both
+are selected by category rather than listed by hand, so the corpus is
+reproducible from the category names.
 
-`documents/wikipedia_pages.json` maps article titles to their plain text. The vector store
-in `chroma_db/` is generated from it and is not committed, since it is reproducible from
-the corpus and the ingestion code. A `.gitkeep` file exists in the `chroma_db/` folder to retain the folder structure.
+The first is 33 English Wikipedia articles covering the Monster Hunter series,
+its individual titles and spin-offs, the consoles they released on, and a list
+of best-selling video games. This provides meta-information about the series.
+
+The second is 469 pages from monsterhunterwiki.org, providing in-game content.
+The two sources answer different question types, and chunks record which corpus
+they came from so retrieval results can be attributed and filtered.
+
+Both are fetched via the MediaWiki API. Wikipedia supports plain-text extracts
+directly, whereas monsterhunterwiki.org pages are requested as rendered HTML and
+reduced to prose by stripping empty headings and non-textual elements. Infobox
+tables are read separately into label-value lines before the surrounding tables
+are discarded, since they hold attributes worth retaining such as
+classification, elements, and elemental weaknesses. Those values are rendered as
+icons whose names appear on the parent link rather than in the image, so they
+are recovered from the link rather than the image text.
+
+Reference, External links, and See also sections are stripped at fetch time,
+along with headings left empty once their tables were removed, MediaWiki
+citation errors, and stub pages whose only content was the legend explaining the
+stat tables.
+
+`documents/wikipedia_pages.json` and `documents/mh_wiki_monsters.json` map page
+titles to their plain text. The vector store in `chroma_db/` is generated from
+them and is not committed, since it is reproducible from the corpus and the
+ingestion code. A `.gitkeep` file retains the folder structure.
 
 ## Design decisions
 
 **Content-hash chunk IDs.** Each chunk's ID is a SHA-256 hash of its source article and
 text, so an unchanged chunk (same `CHUNK_SIZE`, `CHUNK_OVERLAP`) always produces the same ID. Re-running ingestion embeds only
 chunks not already stored, which means adding one article to the corpus costs only that
-article's embeddings rather than a full rebuild(300k tokens using `voyage-4-large` embedding model on current corpus size).
+article's embeddings rather than a full rebuild.
 
 **Persistent vector store.** Chroma writes to disk, so embeddings survive process
 restarts.
@@ -163,10 +170,10 @@ this has not mattered, but a periodic full rebuild would be needed for an evolvi
 verify that loading, chunking, ID generation, and context formatting behave as expected,
 and would catch regressions in the pure-logic parts without requiring API calls.
 
-**Limited corpus scope.** The current sources cover development and commercial history
-rather than in-game content. Expanding via the Fandom wiki API would add monsters,
+~~**Limited corpus scope.** The current sources cover development and commercial history
+rather than in-game content. Expanding via the monster hunter wiki API would add monsters,
 weapons, and quest information, allowing questions about the games themselves rather than
-just the metadata surrounding them.
+just the metadata surrounding them.~~
 
 **No caching layer.** Caching both common queries and their generated answers would avoid
 repeat API calls, reducing latency and token consumption.
