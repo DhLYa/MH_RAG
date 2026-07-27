@@ -54,5 +54,5 @@ def ask(chain, question: str) -> str:
     for i, d in enumerate(result["docs"], 1):
         score = d.metadata.get("relevance_score")
         score = f"{score:.4f}"
-        lines.append(f"  [{i}] {d.metadata.get('source'):{width}}   relevance={score}")
+        lines.append(f"  [{i}] {d.metadata.get('source'):{width}}   relevance={score} - {d.metadata.get('corpus')}" )
     return "\n".join(lines)
