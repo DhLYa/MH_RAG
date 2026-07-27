@@ -20,8 +20,8 @@ def get_vector_store() -> Chroma:
 
 def chunk_id(doc: Document) -> str:
     source = doc.metadata.get("source", "")
-    page = doc.metadata.get("page", "")
-    h = hashlib.sha256(f"{source}-{page}-{doc.page_content}".encode()).hexdigest()
+    corpus = doc.metadata.get("corpus", "")
+    h = hashlib.sha256(f"{corpus}-{source}-{doc.page_content}".encode()).hexdigest()
     return h
 
 def upsert_chunks(store: Chroma, chunks: list[Document]) -> int:
