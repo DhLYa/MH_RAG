@@ -2,7 +2,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.documents import Document
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable, RunnablePassthrough
+from langchain_core.runnables import Runnable, RunnablePassthrough, RunnableParallel
 from langchain_google_genai import ChatGoogleGenerativeAI
  
 from .config import LLM_MODEL
@@ -12,7 +12,11 @@ def get_llm():
     return llm
 
 def format_docs(docs: list[Document]) -> str:
-    return "\n\n".join(doc.page_content for doc in docs)
+    doc_blocks = []
+    for i, d in enumerate(docs, 1):
+        source = d.metadata.get("source")
+        doc_blocks.append(f"[{i}] Source: {source}\n{d.page_content}")
+    return "\n\n".join(doc_blocks)
 
 def build_prompt() -> ChatPromptTemplate:
     return ChatPromptTemplate.from_template("""
@@ -24,13 +28,25 @@ def build_prompt() -> ChatPromptTemplate:
     """)
 
 def build_chain(retriever) -> Runnable:
-    chain = (
-    {"context": retriever | format_docs, "question": RunnablePassthrough()}
-    | build_prompt()
-    | get_llm()
-    | StrOutputParser()
+    answer = (
+        {"context": lambda x: format_docs(x["docs"]), "question": lambda x: x["question"]}
+        | build_prompt()
+        | get_llm()
+        | StrOutputParser()
     )
-    return chain
+    return RunnableParallel(
+        docs=retriever,
+        question=RunnablePassthrough(), 
+    ) | RunnableParallel(
+        answer=answer,
+        docs=lambda x: x["docs"],
+    )
 
 def ask(chain, question: str) -> str:
-    return chain.invoke(question)
+    result = chain.invoke(question)
+    lines = [result["answer"], "\nSources:"]
+    for i, d in enumerate(result["docs"], 1):
+        score = d.metadata.get("relevance_score")
+        score = f"{score:.4f}"
+        lines.append(f"  [{i}] {d.metadata.get('source')}   relevance={score}")
+    return "\n".join(lines)
