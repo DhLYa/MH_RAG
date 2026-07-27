@@ -88,7 +88,7 @@ Interactive question answering:
 python -m rag.pipeline
 ```
 
-**(TO-DO)** Retrieval only, showing which chunks are returned and their re-ranking relevance scores, without calling the
+Retrieval only, showing which chunks are returned and their re-ranking relevance scores, without calling the
 language model:
 
 ```bash
@@ -171,9 +171,9 @@ just the metadata surrounding them.
 **No caching layer.** Caching both common queries and their generated answers would avoid
 repeat API calls, reducing latency and token consumption.
 
-**No retrieval-only mode.** A flag to run retrieval without calling the LLM would allow
+~~**No retrieval-only mode.** A flag to run retrieval without calling the LLM would allow
 inspection of which chunks were returned and their relevance scores, making it possible to
-diagnose retrieval quality without consuming generation quota.
+diagnose retrieval quality without consuming generation quota.~~
 
 **Chunk filtering can discard real content.** The minimum-length filter removes any chunk
 under 80 characters, which catches stranded section headings but will also drop short
