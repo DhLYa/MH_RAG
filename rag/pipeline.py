@@ -17,7 +17,7 @@ from .vectorstore import (
 
 def ingest() -> Chroma:
     documents = load_documents()
-    print(f"Loaded {len(documents)} pages.")
+    print(f"Loaded {len(documents)} documents.")
 
     chunks = chunk_documents(documents)
     print(f"split documents in {len(chunks)} chunks.")
