@@ -25,14 +25,20 @@ def chunk_id(doc: Document) -> str:
     return h
 
 def upsert_chunks(store: Chroma, chunks: list[Document]) -> int:
-    ids = [chunk_id(c) for c in chunks]
     existing = set(store.get()["ids"])
-    new_chunks = [c for c, i in zip(chunks, ids) if i not in existing]
-    new_ids = [i for i in ids if i not in existing]
+    seen = set()
+    new_chunks, new_ids = [], []
+
+    for chunk in chunks:
+        cid = chunk_id(chunk)
+        if cid in existing or cid in seen:
+            continue
+        seen.add(cid)
+        new_chunks.append(chunk)
+        new_ids.append(cid)
 
     if new_chunks:
         store.add_documents(documents=new_chunks, ids=new_ids)
-        
     return len(new_chunks)
 
 def get_reranker(k: int = RERANK_K):
