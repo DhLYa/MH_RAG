@@ -7,7 +7,6 @@ PAGES_FILES = [
     Path("documents/wikipedia_pages.json"),
     Path("documents/mh_wiki_monsters.json"),
 ]
-DOCS_DIR = Path("documents")
 CHROMA_DIR = Path("chroma_db")
 CHUNK_CACHE_DIR = ""
 

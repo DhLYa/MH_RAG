@@ -2,9 +2,8 @@ from collections import defaultdict
 from pathlib import Path
 import json
 
-from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_core.documents import Document
-from .config import DOCS_DIR, PAGES_FILES
+from .config import PAGES_FILES
 
 def load_documents(pages_files: list[Path] = PAGES_FILES) -> list[Document]:
     docs = []
