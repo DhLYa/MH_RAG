@@ -6,23 +6,21 @@ Questions are answered only from the retrieved source material, so the system ci
 answer came from and says "I don't know" rather than falling back on the language model's own knowledge.
 
 Built with LangChain, Voyage AI embeddings and reranking, Chroma as a persistent vector
-store, and Gemini 3.5-flash for free generation.
+store, and Gemini 3.5 Flash-Lite for free generation with a high rate limit.
 
 ## Example
 
 ```
-> How many copies did Monster Hunter Portable 3rd sell?
+>What 4 monsters share a flagship title?
 
-Monster Hunter Portable 3rd sold 2.58 million units in Japan within two weeks of its
-December 2010 release, and went on to reach 4.8 million units in Japan. As of 2018 it
-had sold 4.9 million copies, despite never receiving a Western release.
+The four flagship monsters featured in Monster Hunter Generations are Astalos, Gammoth, Mizutsune, and Glavenus.
 
 Sources:
-  [1] Monster_Hunter_Portable_3rd    relevance=0.9258
-  [2] Monster_Hunter_Freedom_Unite   relevance=0.8398
-  [3] Monster_Hunter_Freedom_Unite   relevance=0.7891
-  [4] Monster_Hunter                 relevance=0.6562
-  [5] Monster_Hunter_Freedom_2       relevance=0.6328
+  [1] Monster_Hunter_Generations   relevance=0.8086 - wikipedia_pages
+  [2] Rathalos                     relevance=0.6680 - mh_wiki_monsters
+  [3] Gore Magala                  relevance=0.6641 - mh_wiki_monsters
+  [4] Azure Rathalos               relevance=0.5625 - mh_wiki_monsters
+  [5] Brachydios                   relevance=0.5078 - mh_wiki_monsters
 ```
 
 ## Pipeline
@@ -51,7 +49,7 @@ against the store.
 ## Setup
 
 ```bash
-pip install -e .
+pip install -r requirements.txt
 ```
 
 Create a `.env` in the repository root containing API_KEY variables:
@@ -67,7 +65,10 @@ Both have usable free tiers:
 (below) when iterating on retrieval.
 
 ## Running
-
+Run cmd from the repository root directory and activate the environment:
+```bash
+conda activate MH_RAG
+```
 Interactive question answering:
 
 ```bash
@@ -86,13 +87,13 @@ python -m rag.pipeline --retrieval-only
 ```
 rag/
     config.py       paths, models, and hyperparameters in one place
-    ingest.py       loads the Wikipedia JSON corpus into Documents
+    ingest.py       loads the JSON corpus into Documents
     chunking.py     splitting and the minimum-length filter
     vectorstore.py  embeddings, Chroma, deduplication, retriever, reranker
     chain.py        prompt, language model, and the LCEL retrieval chain
     pipeline.py     orchestration and command-line entry point
     api.py          FastAPI serving layer
-documents/          the Wikipedia corpus as JSON
+documents/          the corpus as JSON files
 notebooks/          exploration and retrieval inspection
 tests/              unit tests for the pure-logic components
 ```
@@ -132,15 +133,15 @@ ingestion code. A `.gitkeep` file retains the folder structure.
 
 ## Design decisions
 
-**Content-hash chunk IDs.** Each chunk's ID is a SHA-256 hash of its source article and
-text, so an unchanged chunk (same `CHUNK_SIZE`, `CHUNK_OVERLAP`) always produces the same ID. Re-running ingestion embeds only
-chunks not already stored, which means adding one article to the corpus costs only that
+**Content-hash chunk IDs.** Each chunk's ID is a SHA-256 hash of its corpus, source article and
+text, so an unchanged chunk (same `CHUNK_SIZE`, `CHUNK_OVERLAP`) always produces the same ID. Re-running 
+ingestion embeds only chunks not already stored, which means adding one article to the corpus costs only that
 article's embeddings rather than a full rebuild.
 
 **Persistent vector store.** Chroma writes to disk, so embeddings survive process
 restarts.
 
-**Fixed-size chunking over semantic chunking.** Wikipedia articles are already cleanly
+**Fixed-size chunking over semantic chunking.** All articles are already cleanly
 sectioned, so semantic chunking's advantage is modest here, while it costs an additional
 embedding pass over every sentence to determine boundaries. The splitter is configured to
 prefer section and paragraph boundaries before falling back to more arbitrary cuts.
