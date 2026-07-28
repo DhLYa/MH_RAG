@@ -49,6 +49,8 @@ against the store.
 ## Setup
 
 ```bash
+conda create -n MH_RAG python=3.11
+conda activate MH_RAG
 pip install -r requirements.txt
 ```
 
@@ -65,11 +67,9 @@ Both have usable free tiers:
 (below) when iterating on retrieval.
 
 ## Running
-Run cmd from the repository root directory and activate the environment:
-```bash
-conda activate MH_RAG
-```
-Interactive question answering:
+All commands run from the repository root.
+
+Interactive question answering: First run embeds the full corpus; later runs reuse the persisted store and starts immediately.
 
 ```bash
 python -m rag.pipeline
