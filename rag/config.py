@@ -13,6 +13,7 @@ CHUNK_CACHE_DIR = ""
 EMBEDDING_MODEL = "voyage-4-large"
 RERANKER_MODEL = "rerank-2.5"
 LLM_MODEL = "gemini-3.5-flash-lite"
+
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 120
 MIN_CHUNK_CHARS = 80
