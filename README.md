@@ -177,6 +177,10 @@ under 80 characters, which catches stranded section headings but will also drop 
 passages that carry genuine information. A more targeted rule, matching heading-like
 segments rather than filtering purely on length, would avoid false positives.
 
+**Update notebook functionality.** The notebooks in /notebooks contain rough ingestion code 
+for the Wikipedia and MonsterHunterWiki.org APIs. Consolidating them and repurposing them to write the
+.json data files would be a step towards making the corpus more easily rebuildable from source.
+
 ## Completed
 
 **LLM outputs do not yet carry citations.** Chunk metadata includes the source article and the
