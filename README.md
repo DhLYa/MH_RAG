@@ -82,6 +82,12 @@ language model:
 python -m rag.pipeline --retrieval-only
 ```
 
+Pytest: runs all tests in tests folder
+
+```bash
+python -m pytest tests -q
+```
+
 ## Repo layout
 
 ```
