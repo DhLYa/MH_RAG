@@ -87,3 +87,43 @@ def test_distinct_prose_yields_distinct_ids():
     doc = make_doc("\n\n".join(paragraphs))
     ids = [chunk_id(c) for c in chunk_documents([doc])]
     assert len(ids) == len(set(ids))
+
+
+# --------------------------------------------------------------------------
+# load_documents
+# --------------------------------------------------------------------------
+
+@pytest.fixture
+def corpus_files(tmp_path):
+    """Two small corpus files in the same title -> text shape as the real ones."""
+    """Two small corpus files for testing in the same format as Wikipedia and MonsterHunterWiki"""
+    wiki = tmp_path / "wikipedia_pages.json"
+    wiki.write_text(
+        json.dumps({"Monster Hunter": "Monster Hunter is a game series. " * 8}),
+        encoding="utf-8",
+    )
+    monsters = tmp_path / "mh_wiki_monsters.json"
+    monsters.write_text(
+        json.dumps({
+            "Rathalos": "Rathalos is a Flying Wyvern. " * 8,
+            "Agnaktor": "Agnaktor is a Leviathan. " * 8,
+        }),
+        encoding="utf-8",
+    )
+    return [wiki, monsters]
+
+
+def test_load_documents_returns_one_per_page(corpus_files):
+    assert len(load_documents(corpus_files)) == 3
+
+
+def test_load_documents_sets_source_from_title(corpus_files):
+    sources = {d.metadata["source"] for d in load_documents(corpus_files)}
+    assert sources == {"Monster Hunter", "Rathalos", "Agnaktor"}
+
+
+def test_load_documents_sets_corpus_from_filename(corpus_files):
+    by_source = {d.metadata["source"]: d.metadata["corpus"] for d in load_documents(corpus_files)}
+    assert by_source["Monster Hunter"] == "wikipedia_pages"
+    assert by_source["Rathalos"] == "mh_wiki_monsters"
+    assert by_source["Agnaktor"] == "mh_wiki_monsters"
