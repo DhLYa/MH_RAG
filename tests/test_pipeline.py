@@ -154,3 +154,13 @@ def test_format_docs_separates_blocks_with_a_blank_line():
 def test_format_docs_handles_empty_input():
     """Check if empty input is handled correctly"""
     assert format_docs([]) == ""
+
+# --------------------------------------------------------------------------
+# build_prompt
+# --------------------------------------------------------------------------
+ 
+def test_prompt_fills_both_placeholders():
+    """Verify prompt template is setup correctly to accept context and question."""
+    filled = str(build_prompt().invoke({"context": "CONTEXT_HERE", "question": "QUESTION_HERE"}))
+    assert "CONTEXT_HERE" in filled
+    assert "QUESTION_HERE" in filled
