@@ -26,7 +26,7 @@ Sources:
 ## Pipeline
 
 ```
-Wikipedia API
+Wikipedia API + Monster Hunter Wiki API
     -> ingest       One document per article from JSON files
     -> chunking     recursive character split with structural chunking + character based filtering
     -> vectorstore  Voyage embeddings, Chroma, content-hash deduplication
@@ -63,7 +63,7 @@ GOOGLE_API_KEY=your_key
 
 Both have usable free tiers:
 - Voyage provides 200 million free tokens for embedding and reranking. Building the full vector store costs ~620k tokens with `voyage-4-large`, 0.3% of the allowance, so it can be rebuilt many times over at no cost.
-- Gemini's 3.5-flash free tier is rate limited, so use `--retrieval-only`
+- Gemini 3.5 Flash-Lite's free tier is rate limited, so use `--retrieval-only`
 (below) when iterating on retrieval.
 
 ## Running
@@ -169,27 +169,29 @@ separate metrics for retrieval and generation quality. The main blocker is cost:
 uses an LLM as judge, and the number of calls required sits above Gemini's free-tier
 rate limit. Implementing this would be also be time-intensive.
 
-**No test coverage.** A `test_pipeline.py` covering each component in isolation would
-verify that loading, chunking, ID generation, and context formatting behave as expected,
-and would catch regressions in the pure-logic parts without requiring API calls.
-
-~~**Limited corpus scope.** The current sources cover development and commercial history
-rather than in-game content. Expanding via the monster hunter wiki API would add monsters,
-weapons, and quest information, allowing questions about the games themselves rather than
-just the metadata surrounding them.~~
-
 **No caching layer.** Caching both common queries and their generated answers would avoid
 repeat API calls, reducing latency and token consumption.
-
-~~**No retrieval-only mode.** A flag to run retrieval without calling the LLM would allow
-inspection of which chunks were returned and their relevance scores, making it possible to
-diagnose retrieval quality without consuming generation quota.~~
 
 **Chunk filtering can discard real content.** The minimum-length filter removes any chunk
 under 80 characters, which catches stranded section headings but will also drop short
 passages that carry genuine information. A more targeted rule, matching heading-like
 segments rather than filtering purely on length, would avoid false positives.
 
-~~**LLM outputs do not yet carry citations.** Chunk metadata includes the source article and the
+## Completed
+
+**LLM outputs do not yet carry citations.** Chunk metadata includes the source article and the
 reranker's relevance score, but the current chain discards both after formatting the
-context.~~
+context.
+
+**No retrieval-only mode.** A flag to run retrieval without calling the LLM would allow
+inspection of which chunks were returned and their relevance scores, making it possible to
+diagnose retrieval quality without consuming generation quota.
+
+**No test coverage.** A `test_pipeline.py` covering each component in isolation would
+verify that loading, chunking, ID generation, and context formatting behave as expected,
+and would catch regressions in the pure-logic parts without requiring API calls.
+
+**Limited corpus scope.** The current sources cover development and commercial history
+rather than in-game content. Expanding via the monster hunter wiki API would add monsters,
+weapons, and quest information, allowing questions about the games themselves rather than
+just the metadata surrounding them.
