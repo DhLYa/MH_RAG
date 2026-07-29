@@ -127,3 +127,30 @@ def test_load_documents_sets_corpus_from_filename(corpus_files):
     assert by_source["Monster Hunter"] == "wikipedia_pages"
     assert by_source["Rathalos"] == "mh_wiki_monsters"
     assert by_source["Agnaktor"] == "mh_wiki_monsters"
+
+# --------------------------------------------------------------------------
+# format_docs
+# --------------------------------------------------------------------------
+ 
+def test_format_docs_numbers_blocks_from_one():
+    """Check if formatted docs start with source [1]."""
+    out = format_docs([make_doc("first"), make_doc("second")])
+    assert out.startswith("[1]")
+    assert "[2]" in out
+ 
+ 
+def test_format_docs_labels_each_block_with_its_source():
+    """Without source label the LLM output has nothing to cite."""
+    out = format_docs([make_doc("text", source="Rathalos")])
+    assert "Source: Rathalos" in out
+ 
+ 
+def test_format_docs_separates_blocks_with_a_blank_line():
+    """Verify format when printing sources is correct"""
+    out = format_docs([make_doc("first"), make_doc("second")])
+    assert "\n\n" in out
+ 
+ 
+def test_format_docs_handles_empty_input():
+    """Check if empty input is handled correctly"""
+    assert format_docs([]) == ""
