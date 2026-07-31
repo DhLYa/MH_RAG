@@ -19,7 +19,7 @@ def make_doc(text, source="Rathalos", corpus="mh_wiki_monsters"):
 # --------------------------------------------------------------------------
 
 def test_chunk_id_is_stable():
-    """Identical inputs must always has the same to prevent reingestion of same content."""
+    """Identical inputs must always have the same hash to prevent reingestion of same content."""
     assert chunk_id(make_doc("hello world")) == chunk_id(make_doc("hello world"))
 
 
@@ -35,7 +35,7 @@ def test_chunk_id_differs_on_source():
 
 
 def test_chunk_id_differs_on_corpus():
-    """Same title in 2 different corpos must hash differently."""
+    """Same title in 2 different corpora must hash differently."""
     a = make_doc("Shared text", source="Monster Hunter", corpus="wikipedia_pages")
     b = make_doc("Shared text", source="Monster Hunter", corpus="mh_wiki_monsters")
     assert chunk_id(a) != chunk_id(b)
@@ -70,8 +70,8 @@ def test_metadata_survives_chunking():
 
 
 def test_every_chunk_carries_the_source_prefix_exactly_once():
-    """Chunks split far from page opening lose context on the source title lreacing them 
-    unmatachble through queries naming them. The prefix mustn't be doubled which happened 
+    """Chunks split far from page opening lose context on the source title making them
+    unmatchable through queries naming them. The prefix mustn't be doubled which happened 
     during development as both chunker and scraper added this"""
     doc = make_doc("Volcanic Leviathans covered in fins. " * 80, source="Agnaktor")
     for chunk in chunk_documents([doc]):
