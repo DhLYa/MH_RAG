@@ -83,7 +83,7 @@ def test_distinct_prose_yields_distinct_ids():
     """Chroma rejects a batch containing duplicate IDs."""
     paragraphs = []
     for i in range(6):
-        f"Paragraph {i} describes a different aspect of the monster in detail. " * 12
+        paragraphs.append(f"Paragraph {i} describes a different aspect of the monster in detail. " * 12)
     doc = make_doc("\n\n".join(paragraphs))
     ids = [chunk_id(c) for c in chunk_documents([doc])]
     assert len(ids) == len(set(ids))
