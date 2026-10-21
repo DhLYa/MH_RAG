@@ -47,12 +47,15 @@ def build_chain(retriever) -> Runnable:
 def ask(chain, question: str) -> str:
     result = chain.invoke(question)
     docs = result["docs"]
+    if not docs:
+        return f"{result['answer']}\n\nSources: none retrieved"
 
     width = max(len(str(d.metadata.get("source"))) for d in docs)
 
     lines = [result["answer"], "\nSources:"]
-    for i, d in enumerate(result["docs"], 1):
+    for i, d in enumerate(docs, 1):
         score = d.metadata.get("relevance_score")
-        score = f"{score:.4f}"
-        lines.append(f"  [{i}] {d.metadata.get('source'):{width}}   relevance={score} - {d.metadata.get('corpus')}" )
+        score = f"{score:.4f}" if isinstance(score, (int, float)) else "n/a"
+        source = str(d.metadata.get("source"))
+        lines.append(f"  [{i}] {source:{width}}   relevance={score} - {d.metadata.get('corpus')}")
     return "\n".join(lines)
