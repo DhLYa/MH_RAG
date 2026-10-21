@@ -2,38 +2,37 @@
 
 A retrieval-augmented generation pipeline that answers questions about the Monster Hunter
 game series using a corpus built from wikipedia articles, and content from the [Monster Hunter Wiki](https://monsterhunterwiki.org/wiki/Main_Page).
-Questions are answered only from the retrieved source material, so the system cites where each
-answer came from and says "I don't know" rather than falling back on the language model's own knowledge.
+Questions are answered only from the retrieved source material. Each statement cites the numbered
+passage it came from, only the cited sources are listed, and the system says "I don't know" rather
+than falling back on the language model's own knowledge.
 
-Built with LangChain, Voyage AI embeddings and reranking, Chroma as a persistent vector
-store, and Gemini 3.5 Flash-Lite for free generation with a high rate limit.
+Built with LangChain, Voyage AI embeddings and reranking, BM25 keyword search, Chroma as a
+persistent vector store, and Gemini 3.5 Flash-Lite for free generation with a high rate limit.
 
 ## Example
 
 ```
 >What 4 monsters share a flagship title?
 
-The four flagship monsters featured in Monster Hunter Generations are Astalos, Gammoth, Mizutsune, and Glavenus.
+The four flagship monsters featured in Monster Hunter Generations (also known as Monster Hunter X) are Astalos, Gammoth, Mizutsune, and Glavenus [1].
 
 Sources:
-  [1] Monster_Hunter_Generations   relevance=0.8086 - wikipedia_pages
-  [2] Rathalos                     relevance=0.6680 - mh_wiki_monsters
-  [3] Gore Magala                  relevance=0.6641 - mh_wiki_monsters
-  [4] Azure Rathalos               relevance=0.5625 - mh_wiki_monsters
-  [5] Brachydios                   relevance=0.5078 - mh_wiki_monsters
+  [1] Monster_Hunter_Generations   relevance=0.7930 - wikipedia_pages
 ```
+
+Five passages were retrieved; only the one the answer cites is listed. The API returns all five,
+each marked `cited` true or false.
 
 ## Pipeline
 
-```
-Wikipedia API + Monster Hunter Wiki API
-    -> ingest       One document per article from JSON files
-    -> chunking     recursive character split with structural chunking + character based filtering
-    -> vectorstore  Voyage embeddings, Chroma, content-hash deduplication
-    -> retrieval    top-20 by vector similarity
-    -> reranking    Voyage cross-encoder, top-20 -> top-5
-    -> generation   Gemini, answering only from retrieved context
-```
+Before any question is asked, ingestion loads one document per article from the corpus JSON
+files, splits it at section, paragraph and sentence ends, drops heading-only chunks, embeds the
+rest with Voyage and stores them in Chroma under content-hash IDs. Each question then takes this path:
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/retrieval-pipeline-dark.svg">
+  <img alt="Query-time retrieval: the question is embedded for vector search and tokenised for BM25 keyword search over the same Chroma chunks; the two top-20 lists are merged by reciprocal rank fusion into at most 40 candidates; the reranker keeps the top 5, which are numbered in the prompt; Gemini answers citing block numbers; the CLI lists cited sources and the API flags each source as cited." src="docs/retrieval-pipeline-light.svg">
+</picture>
 
 ## Problems worth describing
 
@@ -46,7 +45,22 @@ splitter turned these into chunks with nothing to retrieve, in both corpora.
 Filtering on the text alone cannot reliably tell a heading from a short sentence, so the fix
 uses the page structure. When scraping the HTML, a heading is held back and written only once
 a prose block follows it; if another heading arrives first, it replaces the held one. The
-minimum chunk length filter remains as a backstop for the Wikipedia plain-text extracts.
+Wikipedia plain-text extracts have no HTML to use, so the chunker drops chunks made only of
+headings, as described below.
+
+### Short facts were lost to the length filter
+The first fix for bare headings dropped every chunk under 80 characters. Of the 209 chunks it
+removed, 190 were headings, but the rest were real sentences, some found nowhere else in the
+corpus: "the Gore Magala is genderless", "Bleem! were subsequently forced to shut down in
+November 2001". They were short because the splitter, when breaking a long paragraph at a
+sentence boundary, attached the ". " separator to the next piece, leaving tails such as
+". After Ratha comes to his senses..." as chunks of their own.
+
+The splitter now keeps each separator with the sentence it ends, and the length filter was
+replaced by one that recognises headings by shape: short lines with no punctuation. The first
+version of that rule would have dropped all 471 monster infobox chunks, since lines like
+"Weakest To: Thunder" are just as short and unpunctuated; counting a colon as content fixed it,
+and a test now guards against it.
 
 ### Duplicate chunk IDs rejected on ingestion
 Chunk IDs are a hash of each chunk's corpus, source page and text, so re-running ingestion
@@ -94,6 +108,21 @@ language model:
 python -m rag.pipeline --retrieval-only
 ```
 
+Search one corpus only, `wikipedia_pages` (series and sales history) or `mh_wiki_monsters`
+(in-game monster data). Combines with `--retrieval-only`:
+
+```bash
+python -m rag.pipeline --corpus mh_wiki_monsters
+```
+
+API, with the interactive docs at `http://localhost:8000/docs`. `corpus` is optional:
+
+```bash
+uvicorn rag.api:app
+curl -X POST localhost:8000/query -H "Content-Type: application/json" \
+     -d '{"question": "What is Rathalos weak to?", "corpus": "mh_wiki_monsters"}'
+```
+
 Evaluation against the labelled questions in `evaluation/questions.json`. Retrieval is scored
 by hit rate and MRR before and after reranking, using only Voyage calls; `--generate` also checks
 each LLM answer for the expected terms, or for a refusal on out-of-scope questions:
@@ -101,6 +130,7 @@ each LLM answer for the expected terms, or for a refusal on out-of-scope questio
 ```bash
 python -m rag.evaluate
 python -m rag.evaluate --generate --output evaluation/results/baseline.json
+python -m rag.evaluate --retrieval vector     # compare against vector search alone
 ```
 
 Tests and lint. The tests use fakes in place of the APIs, so they need no keys:
@@ -116,12 +146,13 @@ ruff check rag tests
 rag/
     config.py       paths, models, and hyperparameters in one place
     ingest.py       loads the JSON corpus into Documents
-    chunking.py     splitting and the minimum-length filter
+    chunking.py     splitting and the heading-only filter
     vectorstore.py  embeddings, Chroma, deduplication, retriever, reranker
     chain.py        prompt, language model, and the LCEL retrieval chain
     pipeline.py     orchestration and command-line entry point
     api.py          FastAPI serving layer
     evaluate.py     retrieval and answer scoring on the labelled questions
+docs/               pipeline diagram, light and dark versions
 documents/          the corpus as JSON files
 evaluation/         labelled questions with expected source pages and answer terms
 notebooks/
@@ -184,28 +215,30 @@ prefer section and paragraph boundaries before falling back to more arbitrary cu
 logic, so the serving layer imports it without triggering corpus loading. The chain is
 built once at application startup rather than per request.
 
-**Reranking over a larger candidate set.** The base retriever returns the 20 closest chunks by cosine similarity.
-This is specifically so the reranker has enough candidates to work with. Reranking improves
-precision within a candidate set but cannot recover a relevant chunk that the initial
-retrieval missed entirely.
+**Reranking over a larger candidate set.** Retrieval returns up to 40 candidates so the
+reranker has enough to work with. Reranking improves precision within a candidate set but
+cannot recover a relevant chunk that the initial retrieval missed entirely.
+
+**Hybrid retrieval.** Embeddings place a question near passages with similar meaning, which
+fails for rare exact terms: asked which monster is called "Arushuberudo" in Japanese, vector
+search ranked the Arkveld page 7th and the reranker dropped it. BM25 keyword search over the
+same chunks finds such terms directly, and the two ranked lists are merged by reciprocal rank
+fusion before reranking. On the evaluation set this raised reranked hit@1 from 0.96 to 0.98
+and keyword questions from 0.80 to 1.00, with no category getting worse. The BM25 index is
+built in memory from the stored chunks at startup. `HYBRID_SEARCH` in `config.py` turns it off.
 
 ## Limitations and next steps
 
 **Evaluation is keyword-based and the question set is small.** `rag.evaluate` scores
 retrieval against labelled source pages and checks answers for expected terms, which avoids
-an LLM judge and stays within free tiers. Term matching cannot judge paraphrased or partially
-correct answers; an LLM-as-judge framework such as RAGAS would, at the cost of more calls
-than Gemini's free tier allows. Most questions name their subject, so retrieval scores are
-near ceiling; harder questions (comparisons, facts spread across pages, variants such as
-Rathalos and Azure Rathalos) would separate configurations better.
+an LLM judge and stays within free tiers. Term matching cannot judge paraphrased answers: two
+correct answers ("highly intelligent", "lacks any determinable sex") were scored wrong until
+their labels accepted those wordings. An LLM-as-judge framework such as RAGAS would handle
+this, at the cost of more calls than Gemini's free tier allows. With 60 questions, one
+question is worth almost two points of accuracy, so small differences between runs are noise.
 
 **No caching layer.** Caching both common queries and their generated answers would avoid
 repeat API calls, reducing latency and token consumption.
-
-**Chunk filtering can discard real content.** The minimum-length filter removes any chunk
-under 80 characters, which catches stranded section headings but will also drop short
-passages that carry genuine information. A more targeted rule, matching heading-like
-segments rather than filtering purely on length, would avoid false positives.
 
 ## Completed
 

@@ -4,12 +4,12 @@ from langchain_chroma import Chroma
 
 from .chain import ask, build_chain
 from .chunking import chunk_documents
-from .config import RERANK_K, RETRIEVAL_K
+from .config import CORPORA, HYBRID_SEARCH, RERANK_K
 from .ingest import load_documents
 from .vectorstore import (
+    get_candidate_retriever,
     get_compression_retriever,
     get_reranker,
-    get_retriever,
     get_vector_store,
     remove_stale_chunks,
     upsert_chunks,
@@ -32,19 +32,19 @@ def ingest() -> Chroma:
 
     return store
 
-def print_retrieval(store, reranker, question):
+def print_retrieval(candidate_retriever, reranker, question):
     """
-    Shows the base and reranked results side by side without invoking unnecessary LLM calls.
+    Shows the candidate and reranked results side by side without invoking unnecessary LLM calls.
     Reranks the candidates already fetched rather than searching again, so the question
     is embedded once.
     """
-    scored = store.similarity_search_with_score(question, k=RETRIEVAL_K)
-    candidates = [d for d, _ in scored]
+    candidates = candidate_retriever.invoke(question)
     reranked = reranker.compress_documents(candidates, question) if candidates else []
 
-    print(f"\nBase retriever top {RERANK_K} (distance, lower = closer):")
-    for i, (d, distance) in enumerate(scored[:RERANK_K], 1):
-        print(f"  {i}. {d.metadata.get('source')}   distance={distance:.4f}")
+    kind = "vector + keyword, fused" if HYBRID_SEARCH else "vector"
+    print(f"\nCandidates top {RERANK_K} of {len(candidates)} ({kind}):")
+    for i, d in enumerate(candidates[:RERANK_K], 1):
+        print(f"  {i}. {d.metadata.get('source')}")
 
     print(f"\nReranked top {RERANK_K}:")
     for i, d in enumerate(reranked, 1):
@@ -53,18 +53,20 @@ def print_retrieval(store, reranker, question):
         print(f"  {i}. {d.metadata.get('source')}   score={score}")
         print(f"     {d.page_content[:150].strip()}")
 
-def main(retrieval_only: bool = False):
+def main(retrieval_only: bool = False, corpus: str | None = None):
     store = ingest()
 
     reranker = get_reranker()
+    candidate_retriever = get_candidate_retriever(store, corpus=corpus)
 
     if retrieval_only:
         chain = None
         mode = "Retrieval only, no unnecessary LLM calls"
     else:
-        compression_retriever = get_compression_retriever(reranker, get_retriever(store))
-        chain = build_chain(compression_retriever)
+        chain = build_chain(get_compression_retriever(reranker, candidate_retriever))
         mode = "RAG ready"
+    if corpus:
+        mode += f" (searching {corpus} only)"
 
     print(f"\n{mode}, Ask a question. (empty line to quit).")
     while True:
@@ -75,7 +77,7 @@ def main(retrieval_only: bool = False):
         if not question:
             break
         if retrieval_only:
-            print_retrieval(store, reranker, question)
+            print_retrieval(candidate_retriever, reranker, question)
         else:
             print(ask(chain, question))
 
@@ -86,5 +88,10 @@ if __name__ == "__main__":
         action="store_true",
         help="Inspect retrieved chunks and scores without unnecessary LLM calls.",
     )
+    parser.add_argument(
+        "--corpus",
+        choices=CORPORA,
+        help="Search one corpus only (default: both).",
+    )
     args = parser.parse_args()
-    main(retrieval_only=args.retrieval_only)
+    main(retrieval_only=args.retrieval_only, corpus=args.corpus)

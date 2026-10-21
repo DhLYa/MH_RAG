@@ -2,7 +2,9 @@ import json
 from pathlib import Path
 
 from langchain_core.documents import Document
+
 from .config import PAGES_FILES
+
 
 def load_documents(pages_files: list[Path] = PAGES_FILES) -> list[Document]:
     docs = []
