@@ -1,7 +1,8 @@
+import logging
 from contextlib import asynccontextmanager
 from typing import Literal
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
@@ -14,6 +15,8 @@ from .vectorstore import (
     get_vector_store,
     is_empty,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def build_rag_chains() -> dict:
@@ -55,9 +58,29 @@ def health():
 def root():
     return RedirectResponse("/docs")
 
+def is_rate_limit(error: Exception) -> bool:
+    """Gemini reports 429 / RESOURCE_EXHAUSTED; Voyage raises RateLimitError."""
+    text = f"{type(error).__name__} {error}"
+    return any(marker in text for marker in ("RateLimit", "ResourceExhausted", "RESOURCE_EXHAUSTED", "429"))
+
 @app.post("/query")
 def query(q: Query, request: Request):
-    result = request.app.state.chains[q.corpus].invoke(q.question)
+    try:
+        result = request.app.state.chains[q.corpus].invoke(q.question)
+    except Exception as e:
+        # The embedding, reranking or generation call failed upstream. Log the details here and
+        # tell the client what it can do about it, without passing the provider's error text on.
+        logger.exception("Query failed")
+        if is_rate_limit(e):
+            raise HTTPException(
+                status_code=503,
+                detail="The model provider is rate limiting requests. Retry in about 30 seconds.",
+                headers={"Retry-After": "30"},
+            ) from e
+        raise HTTPException(
+            status_code=503,
+            detail="Answering failed because a model provider is unavailable. Try again shortly.",
+        ) from e
     cited = cited_indices(result["answer"], len(result["docs"]))
     return {
         "answer": result["answer"],

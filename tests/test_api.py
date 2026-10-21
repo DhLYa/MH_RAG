@@ -77,6 +77,39 @@ def test_query_rejects_an_unknown_corpus(client_with):
         assert client.post("/query", json={"question": "?", "corpus": "fandom"}).status_code == 422
 
 
+class FailingChain:
+    def __init__(self, error):
+        self.error = error
+
+    def invoke(self, question):
+        raise self.error
+
+
+class ResourceExhausted(Exception):
+    """Same name as the exception Google's client raises for a 429."""
+
+
+@pytest.mark.parametrize("error", [
+    RuntimeError("429 RESOURCE_EXHAUSTED. Quota exceeded for generate_content_free_tier_requests"),
+    ResourceExhausted("Resource has been exhausted (e.g. check quota)."),
+])
+def test_rate_limit_gives_503_with_retry_advice(client_with, error):
+    with client_with(FailingChain(error)) as client:
+        response = client.post("/query", json={"question": "?"})
+    assert response.status_code == 503
+    assert "rate limiting" in response.json()["detail"]
+    assert response.headers["Retry-After"] == "30"
+
+
+def test_other_failures_give_503_without_leaking_the_error(client_with):
+    """The provider's message can include request details; it belongs in the server log, not the response."""
+    with client_with(FailingChain(ConnectionError("api.voyageai.com: key sk-abc123 refused"))) as client:
+        response = client.post("/query", json={"question": "?"})
+    assert response.status_code == 503
+    assert "sk-abc123" not in response.text
+    assert "unavailable" in response.json()["detail"]
+
+
 def test_query_rejects_a_missing_question(client_with):
     with client_with(FakeChain([])) as client:
         assert client.post("/query", json={}).status_code == 422

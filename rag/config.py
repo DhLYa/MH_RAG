@@ -19,6 +19,7 @@ EVAL_QUESTIONS_FILE = ROOT / "evaluation" / "questions.json"
 EMBEDDING_MODEL = "voyage-4-large"
 RERANKER_MODEL = "rerank-2.5"
 LLM_MODEL = "gemini-3.5-flash-lite"
+LLM_TEMPERATURE = 0     # same question, same answer, so evaluation runs can be compared
 
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 120

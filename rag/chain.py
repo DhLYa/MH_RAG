@@ -6,7 +6,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable, RunnableParallel, RunnablePassthrough
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-from .config import LLM_MODEL
+from .config import LLM_MODEL, LLM_TEMPERATURE
 
 # Kept flush-left: indentation inside the string would be sent to the model on every line
 PROMPT_TEMPLATE = """\
@@ -24,7 +24,7 @@ Question: {question}
 CITATION = re.compile(r"\[(\d+(?:\s*,\s*\d+)*)\]")
 
 def get_llm():
-    llm = ChatGoogleGenerativeAI(model=LLM_MODEL)
+    llm = ChatGoogleGenerativeAI(model=LLM_MODEL, temperature=LLM_TEMPERATURE)
     return llm
 
 def format_docs(docs: list[Document]) -> str:

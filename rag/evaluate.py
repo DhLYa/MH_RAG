@@ -233,7 +233,7 @@ def print_generation_report(summary: dict, results: list[dict]) -> None:
 
 def config_snapshot(hybrid: bool) -> dict:
     """Settings that affect the scores, saved with the results so runs can be compared."""
-    names = ["EMBEDDING_MODEL", "RERANKER_MODEL", "LLM_MODEL", "CHUNK_SIZE",
+    names = ["EMBEDDING_MODEL", "RERANKER_MODEL", "LLM_MODEL", "LLM_TEMPERATURE", "CHUNK_SIZE",
              "CHUNK_OVERLAP", "MIN_CHUNK_CHARS", "RETRIEVAL_K", "BM25_K", "RERANK_K"]
     snapshot = {name: getattr(config, name) for name in names}
     snapshot["HYBRID_SEARCH"] = hybrid
