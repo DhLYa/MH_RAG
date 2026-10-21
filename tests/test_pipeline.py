@@ -1,8 +1,10 @@
 import json
+from pathlib import Path
 
 import pytest
 from langchain_core.documents import Document
 
+from rag import config
 from rag.chain import ask, build_prompt, cited_indices, format_docs
 from rag.chunking import chunk_documents, is_heading_only
 from rag.config import MIN_CHUNK_CHARS
@@ -12,6 +14,20 @@ from rag.vectorstore import chunk_id, is_empty, remove_stale_chunks, upsert_chun
 
 def make_doc(text, source="Rathalos", corpus="mh_wiki_monsters"):
     return Document(page_content=text, metadata={"source": source, "corpus": corpus})
+
+
+# --------------------------------------------------------------------------
+# config
+# --------------------------------------------------------------------------
+
+def test_data_paths_are_anchored_to_the_repository(monkeypatch, tmp_path):
+    """Relative paths resolved against whatever folder the process started in; from notebooks/
+    the API created a stray empty chroma_db there and refused to start."""
+    monkeypatch.chdir(tmp_path)
+    repo = Path(__file__).resolve().parent.parent
+    for path in [*config.PAGES_FILES, config.CHROMA_DIR, config.EVAL_QUESTIONS_FILE]:
+        assert path.is_absolute()
+        assert path.is_relative_to(repo)
 
 
 # --------------------------------------------------------------------------
