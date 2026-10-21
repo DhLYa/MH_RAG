@@ -3,11 +3,11 @@ import json
 import pytest
 from langchain_core.documents import Document
 
-from rag.chain import build_prompt, format_docs
+from rag.chain import ask, build_prompt, format_docs
 from rag.chunking import chunk_documents
 from rag.config import MIN_CHUNK_CHARS
 from rag.ingest import load_documents
-from rag.vectorstore import chunk_id
+from rag.vectorstore import chunk_id, is_empty, remove_stale_chunks, upsert_chunks
 
 
 def make_doc(text, source="Rathalos", corpus="mh_wiki_monsters"):
@@ -164,3 +164,90 @@ def test_prompt_fills_both_placeholders():
     filled = str(build_prompt().invoke({"context": "CONTEXT_HERE", "question": "QUESTION_HERE"}))
     assert "CONTEXT_HERE" in filled
     assert "QUESTION_HERE" in filled
+# --------------------------------------------------------------------------
+# upsert_chunks / remove_stale_chunks
+# --------------------------------------------------------------------------
+
+class FakeStore:
+    """Stands in for Chroma: an id -> Document map with the calls the pipeline uses."""
+    def __init__(self, docs=()):
+        self.docs = {chunk_id(d): d for d in docs}
+        self.delete_calls = []
+
+    def get(self, include=None, limit=None):
+        ids = list(self.docs)
+        return {"ids": ids[:limit] if limit else ids}
+
+    def add_documents(self, documents, ids):
+        assert len(ids) == len(set(ids)), "Chroma rejects duplicate IDs in a batch"
+        self.docs.update(zip(ids, documents))
+
+    def delete(self, ids):
+        self.delete_calls.append(ids)
+        for i in ids:
+            del self.docs[i]
+
+
+def test_upsert_skips_stored_and_repeated_chunks():
+    stored = make_doc("already embedded")
+    store = FakeStore([stored])
+    new = make_doc("new paragraph")
+    assert upsert_chunks(store, [stored, new, make_doc("new paragraph")]) == 1
+    assert set(store.docs) == {chunk_id(stored), chunk_id(new)}
+
+
+def test_remove_stale_chunks_deletes_only_chunks_no_longer_produced():
+    """Changing CHUNK_SIZE or re-scraping leaves old chunks behind that would still be retrieved."""
+    kept, stale = make_doc("still current"), make_doc("old chunking")
+    store = FakeStore([kept, stale])
+    assert remove_stale_chunks(store, [kept]) == 1
+    assert set(store.docs) == {chunk_id(kept)}
+
+
+def test_remove_stale_chunks_is_a_no_op_when_in_sync():
+    docs = [make_doc("a"), make_doc("b")]
+    store = FakeStore(docs)
+    assert remove_stale_chunks(store, docs) == 0
+    assert store.delete_calls == []
+
+
+def test_remove_stale_chunks_deletes_in_batches():
+    """Chroma caps the number of IDs per call."""
+    store = FakeStore([make_doc(f"chunk {i}") for i in range(5)])
+    assert remove_stale_chunks(store, [], batch_size=2) == 5
+    assert [len(c) for c in store.delete_calls] == [2, 2, 1]
+    assert store.docs == {}
+
+
+def test_is_empty():
+    assert is_empty(FakeStore())
+    assert not is_empty(FakeStore([make_doc("x")]))
+
+# --------------------------------------------------------------------------
+# ask
+# --------------------------------------------------------------------------
+
+class FakeChain:
+    def __init__(self, docs):
+        self.docs = docs
+
+    def invoke(self, question):
+        return {"answer": "I don't know.", "docs": self.docs}
+
+
+def test_ask_handles_no_retrieved_docs():
+    out = ask(FakeChain([]), "anything")
+    assert out.startswith("I don't know.")
+    assert "Sources: none retrieved" in out
+
+
+def test_ask_handles_missing_relevance_score():
+    out = ask(FakeChain([make_doc("text", source="Rathalos")]), "anything")
+    assert "[1] Rathalos" in out
+    assert "relevance=n/a" in out
+
+
+def test_ask_formats_relevance_score():
+    doc = make_doc("text", source="Rathalos")
+    doc.metadata["relevance_score"] = 0.80859
+    assert "relevance=0.8086 - mh_wiki_monsters" in ask(FakeChain([doc]), "anything")
