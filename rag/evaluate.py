@@ -27,7 +27,13 @@ from . import config
 from .chain import build_answer_chain, cited_indices
 from .chunking import chunk_documents
 from .ingest import load_documents
-from .vectorstore import chunk_id, get_candidate_retriever, get_reranker, get_vector_store, stored_ids
+from .vectorstore import (
+    chunk_id,
+    get_candidate_retriever,
+    get_reranker,
+    get_vector_store,
+    stored_ids,
+)
 
 REFUSAL_PHRASES = (
     "don't know",

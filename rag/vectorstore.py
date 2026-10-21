@@ -2,7 +2,10 @@ import hashlib
 import re
 
 from langchain_chroma import Chroma
-from langchain_classic.retrievers import ContextualCompressionRetriever, EnsembleRetriever
+from langchain_classic.retrievers import (
+    ContextualCompressionRetriever,
+    EnsembleRetriever,
+)
 from langchain_community.retrievers import BM25Retriever
 from langchain_core.documents import Document
 from langchain_voyageai import VoyageAIEmbeddings, VoyageAIRerank
@@ -16,6 +19,7 @@ from .config import (
     RERANKER_MODEL,
     RETRIEVAL_K,
 )
+
 
 def get_embedding_model() -> VoyageAIEmbeddings:
     embedding_model = VoyageAIEmbeddings(model=EMBEDDING_MODEL)
