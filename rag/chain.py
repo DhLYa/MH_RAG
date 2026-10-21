@@ -27,14 +27,15 @@ def get_llm():
     llm = ChatGoogleGenerativeAI(model=LLM_MODEL, temperature=LLM_TEMPERATURE)
     return llm
 
+def format_block(number: int, doc: Document) -> str:
+    """One numbered context block, e.g. "[3] Source: Rathalos" followed by the passage."""
+    source = doc.metadata.get("source")
+    # Chunks already open with "Source: <title>" for retrieval; the block header says it once
+    content = doc.page_content.removeprefix(f"Source: {source}\n\n")
+    return f"[{number}] Source: {source}\n{content}"
+
 def format_docs(docs: list[Document]) -> str:
-    doc_blocks = []
-    for i, d in enumerate(docs, 1):
-        source = d.metadata.get("source")
-        # Chunks already open with "Source: <title>" for retrieval; the block header says it once
-        content = d.page_content.removeprefix(f"Source: {source}\n\n")
-        doc_blocks.append(f"[{i}] Source: {source}\n{content}")
-    return "\n\n".join(doc_blocks)
+    return "\n\n".join(format_block(i, d) for i, d in enumerate(docs, 1))
 
 def cited_indices(answer: str, n_docs: int) -> list[int]:
     """Block numbers cited in the answer, in order of first citation. Numbers outside

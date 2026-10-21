@@ -19,7 +19,9 @@ EVAL_QUESTIONS_FILE = ROOT / "evaluation" / "questions.json"
 EMBEDDING_MODEL = "voyage-4-large"
 RERANKER_MODEL = "rerank-2.5"
 LLM_MODEL = "gemini-3.5-flash-lite"
-LLM_TEMPERATURE = 0     # same question, same answer, so evaluation runs can be compared
+# Ignored by gemini-3.5-flash-lite, which uses fixed sampling; applies if LLM_MODEL is switched to a
+# model that honours it (e.g. gemini-3.5-flash), making evaluation runs repeatable
+LLM_TEMPERATURE = 0
 
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 120
@@ -29,3 +31,5 @@ RETRIEVAL_K = 20
 HYBRID_SEARCH = True    # fuse BM25 keyword results with vector results before reranking
 BM25_K = 20
 RERANK_K = 5
+
+AGENT_MAX_SEARCHES = 4  # agent mode: searches per question before it must answer
