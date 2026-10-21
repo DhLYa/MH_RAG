@@ -3,8 +3,8 @@ import json
 import pytest
 from langchain_core.documents import Document
 
-from rag.chain import ask, build_prompt, format_docs
-from rag.chunking import chunk_documents
+from rag.chain import ask, build_prompt, cited_indices, format_docs
+from rag.chunking import chunk_documents, is_heading_only
 from rag.config import MIN_CHUNK_CHARS
 from rag.ingest import load_documents
 from rag.vectorstore import chunk_id, is_empty, remove_stale_chunks, upsert_chunks
@@ -45,18 +45,49 @@ def test_chunk_id_differs_on_corpus():
 # chunk_documents
 # --------------------------------------------------------------------------
 
+def chunk_bodies(doc):
+    """Chunk text without the "Source: <title>" prefix."""
+    return [c.page_content.split("\n\n", 1)[1].strip() for c in chunk_documents([doc])]
+
+
 def test_no_chunk_below_minimum_length():
-    """Bare section headings in wikipedia corpus became content-less chunks, the filter removes them."""
     doc = make_doc("Physiology\n\n" + "The Agnaktor is a magmatic Leviathan. " * 40)
-    for chunk in chunk_documents([doc]):
-        body = chunk.page_content.split("\n\n", 1)[1]
-        assert len(body.strip()) >= MIN_CHUNK_CHARS
+    for body in chunk_bodies(doc):
+        assert len(body) >= MIN_CHUNK_CHARS
 
 
 def test_bare_heading_does_not_survive_as_a_chunk():
+    """Bare section headings in the Wikipedia corpus became content-less chunks."""
     doc = make_doc("Physiology\n\n" + "The Agnaktor is a magmatic Leviathan. " * 40)
-    bodies = [c.page_content.split("\n\n", 1)[1].strip() for c in chunk_documents([doc])]
-    assert "Physiology" not in bodies
+    assert "Physiology" not in chunk_bodies(doc)
+
+
+def test_short_sentence_survives_as_a_chunk():
+    """The old 80-character filter dropped short facts such as this one."""
+    doc = make_doc("The Agnaktor is a magmatic Leviathan. " * 40 + "\n\nThe Gore Magala is genderless.")
+    assert "The Gore Magala is genderless." in chunk_bodies(doc)
+
+
+def test_no_chunk_starts_with_the_previous_sentences_full_stop():
+    """With the default splitter, ". " moved to the start of the next chunk, leaving tails like ". After..."."""
+    doc = make_doc("The Agnaktor is a magmatic Leviathan. " * 60)
+    bodies = chunk_bodies(doc)
+    assert len(bodies) > 1
+    for body in bodies:
+        assert not body.startswith(".")
+
+
+def test_is_heading_only():
+    assert is_heading_only("Gameplay")
+    assert is_heading_only("Plot\nRise arc")
+    assert is_heading_only("== References ==")
+    assert not is_heading_only("The Gore Magala is genderless.")
+    assert not is_heading_only("Remote Play interactivity with the PlayStation 4 and PlayStation 5")
+
+
+def test_infobox_lines_are_not_mistaken_for_headings():
+    """Infobox lines are short and unpunctuated like headings, but hold the key monster attributes."""
+    assert not is_heading_only("Classification: Flying Wyvern\nElements: Fire\nWeakest To: Dragon")
 
 
 def test_metadata_survives_chunking():
@@ -144,6 +175,14 @@ def test_format_docs_labels_each_block_with_its_source():
     assert "Source: Rathalos" in out
  
  
+def test_format_docs_names_the_source_once_per_block():
+    """Chunks carry a "Source: <title>" prefix for retrieval; the context shouldn't repeat it."""
+    chunk = chunk_documents([make_doc("Rathalos is a Flying Wyvern. " * 10, source="Rathalos")])[0]
+    out = format_docs([chunk])
+    assert out.startswith("[1] Source: Rathalos\nRathalos is a Flying Wyvern.")
+    assert out.count("Source: Rathalos") == 1
+
+
 def test_format_docs_separates_blocks_with_a_blank_line():
     """Verify format when printing sources is correct"""
     out = format_docs([make_doc("first"), make_doc("second")])
@@ -227,11 +266,12 @@ def test_is_empty():
 # --------------------------------------------------------------------------
 
 class FakeChain:
-    def __init__(self, docs):
+    def __init__(self, docs, answer="I don't know."):
         self.docs = docs
+        self.answer = answer
 
     def invoke(self, question):
-        return {"answer": "I don't know.", "docs": self.docs}
+        return {"answer": self.answer, "docs": self.docs}
 
 
 def test_ask_handles_no_retrieved_docs():
@@ -250,3 +290,35 @@ def test_ask_formats_relevance_score():
     doc = make_doc("text", source="Rathalos")
     doc.metadata["relevance_score"] = 0.80859
     assert "relevance=0.8086 - mh_wiki_monsters" in ask(FakeChain([doc]), "anything")
+
+
+def test_ask_lists_only_cited_sources_under_their_own_numbers():
+    docs = [make_doc("a", source="Tigrex"), make_doc("b", source="Rathalos"), make_doc("c", source="Rathian")]
+    out = ask(FakeChain(docs, answer="Rathalos is weak to Dragon [2]."), "anything")
+    assert "\nSources:" in out
+    assert "[2] Rathalos" in out
+    assert "Tigrex" not in out and "Rathian" not in out
+
+
+def test_ask_falls_back_to_all_retrieved_when_nothing_is_cited():
+    """Without citations, still show what the answer was based on, labelled as such."""
+    docs = [make_doc("a", source="Tigrex"), make_doc("b", source="Rathalos")]
+    out = ask(FakeChain(docs, answer="I don't know."), "anything")
+    assert "Retrieved (none cited):" in out
+    assert "[1] Tigrex" in out and "[2] Rathalos" in out
+
+# --------------------------------------------------------------------------
+# cited_indices
+# --------------------------------------------------------------------------
+
+def test_cited_indices_reads_all_citation_styles_in_order():
+    assert cited_indices("Fire [3]. Water [1][2]. Ice [2, 4].", n_docs=5) == [3, 1, 2, 4]
+
+
+def test_cited_indices_ignores_numbers_outside_the_blocks_given():
+    """[0] or [9] cannot refer to a context block when only 5 were given."""
+    assert cited_indices("See [0], [9] and [5].", n_docs=5) == [5]
+
+
+def test_cited_indices_none():
+    assert cited_indices("I don't know.", n_docs=5) == []

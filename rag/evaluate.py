@@ -2,8 +2,9 @@
 Scores the pipeline against the labelled questions in evaluation/questions.json.
 
 Retrieval is scored by where the first chunk from an expected source page lands, both
-before reranking (top RETRIEVAL_K by vector similarity) and after (top RERANK_K). This
-needs only Voyage calls.
+among the candidates before reranking and in the top RERANK_K after. Candidates come from
+vector search, fused with BM25 keyword search when hybrid; --retrieval picks either, so the
+two can be compared. This needs only Voyage calls.
 
 --generate also asks the LLM each question and checks the answer contains the expected
 terms, or that it says it doesn't know for out-of-scope questions. That is one LLM call
@@ -12,6 +13,7 @@ per question, spaced by --delay to stay under the free-tier rate limit.
     python -m rag.evaluate
     python -m rag.evaluate --generate --limit 10
     python -m rag.evaluate --output evaluation/results/baseline.json
+    python -m rag.evaluate --retrieval vector
 """
 import argparse
 import json
@@ -22,10 +24,16 @@ from langchain_core.documents import Document
 from tqdm import tqdm
 
 from . import config
-from .chain import build_answer_chain
+from .chain import build_answer_chain, cited_indices
 from .chunking import chunk_documents
 from .ingest import load_documents
-from .vectorstore import chunk_id, get_reranker, get_vector_store, stored_ids
+from .vectorstore import (
+    chunk_id,
+    get_candidate_retriever,
+    get_reranker,
+    get_vector_store,
+    stored_ids,
+)
 
 REFUSAL_PHRASES = (
     "don't know",
@@ -111,12 +119,12 @@ def warn_if_store_out_of_sync(store) -> None:
         )
 
 
-def evaluate_question(question: dict, store, reranker, answer_chain=None) -> dict:
+def evaluate_question(question: dict, candidate_retriever, reranker, answer_chain=None) -> dict:
     text = question["question"]
     expected = set(question["sources"])
 
     # The same two steps the compression retriever runs, kept separate so both can be scored
-    candidates = store.similarity_search(text, k=config.RETRIEVAL_K)
+    candidates = candidate_retriever.invoke(text)
     reranked = reranker.compress_documents(candidates, text) if candidates else []
 
     result = {
@@ -137,10 +145,15 @@ def evaluate_question(question: dict, store, reranker, answer_chain=None) -> dic
             result["answer_error"] = f"{type(e).__name__}: {e}"[:300]
             return result
         result["answer"] = answer
+        cited = [reranked[i - 1].metadata.get("source") for i in cited_indices(answer, len(reranked))]
+        result["cited_sources"] = cited
         if expected:
             result["answer_correct"] = answer_matches(answer, question["answer_contains"])
+            result["citation_correct"] = bool(expected & set(cited))
         else:
+            # Nothing in the corpus answers it, so nothing should be cited
             result["answer_correct"] = is_refusal(answer)
+            result["citation_correct"] = not cited
     return result
 
 
@@ -162,6 +175,8 @@ def summarise(results: list[dict]) -> dict:
         if answered:
             correct = sum(1 for r in answered if r["answer_correct"])
             entry["answer_accuracy"] = correct / len(answered)
+            cited_correctly = sum(1 for r in answered if r.get("citation_correct"))
+            entry["citation_accuracy"] = cited_correctly / len(answered)
         summary[name] = entry
     return summary
 
@@ -173,13 +188,13 @@ def summarise(results: list[dict]) -> dict:
 def print_retrieval_report(summary: dict, results: list[dict]) -> None:
     k, big_k = config.RERANK_K, config.RETRIEVAL_K
     print("\nRetrieval: hit@k = share of questions with an expected page in the top k\n")
-    print(f"{'':16}{'n':>4} | {'base hit@1':>10} {f'hit@{k}':>6} {f'hit@{big_k}':>7} {'MRR':>5}"
+    print(f"{'':16}{'n':>4} | {'candidates hit@1':>16} {f'hit@{k}':>6} {f'hit@{big_k}':>7} {'MRR':>5}"
           f" | {'reranked hit@1':>14} {f'hit@{k}':>6} {'MRR':>5}")
     for name, entry in summary.items():
         if "base" not in entry:
             continue
         base, reranked = entry["base"], entry["reranked"]
-        print(f"{name:16}{entry['retrieval_scored']:>4} | {base['hit@1']:>10.2f} {base[f'hit@{k}']:>6.2f} {base[f'hit@{big_k}']:>7.2f}"
+        print(f"{name:16}{entry['retrieval_scored']:>4} | {base['hit@1']:>16.2f} {base[f'hit@{k}']:>6.2f} {base[f'hit@{big_k}']:>7.2f}"
               f" {base['mrr']:>5.2f} | {reranked['hit@1']:>14.2f} {reranked[f'hit@{k}']:>6.2f} {reranked['mrr']:>5.2f}")
 
     misses = [r for r in results if "reranked_rank" in r and r["reranked_rank"] is None]
@@ -187,7 +202,7 @@ def print_retrieval_report(summary: dict, results: list[dict]) -> None:
         print(f"\nMissed after reranking ({len(misses)}):")
         for r in misses:
             if r["base_rank"] is None:
-                where = f"not in the top {big_k} candidates"
+                where = "not among the candidates"
             else:
                 where = f"candidate rank {r['base_rank']}, dropped by the reranker"
             print(f"  [{r['id']}] {r['question']}")
@@ -196,10 +211,12 @@ def print_retrieval_report(summary: dict, results: list[dict]) -> None:
 
 
 def print_generation_report(summary: dict, results: list[dict]) -> None:
-    print("\nAnswers: expected terms present, or a refusal for out-of-scope questions\n")
+    print("\nAnswers: expected terms present, or a refusal for out-of-scope questions")
+    print("Citations: an expected page cited, or nothing cited for out-of-scope questions\n")
+    print(f"  {'':16}{'answers':>8}{'citations':>11}")
     for name, entry in summary.items():
         if "answer_accuracy" in entry:
-            print(f"  {name:16}{entry['answer_accuracy']:.2f}")
+            print(f"  {name:16}{entry['answer_accuracy']:>8.2f}{entry['citation_accuracy']:>11.2f}")
 
     errors = [r for r in results if "answer_error" in r]
     if errors:
@@ -214,18 +231,22 @@ def print_generation_report(summary: dict, results: list[dict]) -> None:
             print(f"      {answer[:200]}")
 
 
-def config_snapshot() -> dict:
+def config_snapshot(hybrid: bool) -> dict:
     """Settings that affect the scores, saved with the results so runs can be compared."""
     names = ["EMBEDDING_MODEL", "RERANKER_MODEL", "LLM_MODEL", "CHUNK_SIZE",
-             "CHUNK_OVERLAP", "MIN_CHUNK_CHARS", "RETRIEVAL_K", "RERANK_K"]
-    return {name: getattr(config, name) for name in names}
+             "CHUNK_OVERLAP", "MIN_CHUNK_CHARS", "RETRIEVAL_K", "BM25_K", "RERANK_K"]
+    snapshot = {name: getattr(config, name) for name in names}
+    snapshot["HYBRID_SEARCH"] = hybrid
+    return snapshot
 
 
-def main(generate: bool, limit: int | None, delay: float, questions_path: Path, output: Path | None):
+def main(generate: bool, limit: int | None, delay: float, questions_path: Path, output: Path | None,
+         hybrid: bool = config.HYBRID_SEARCH):
     questions = load_questions(questions_path)[:limit]
 
     store = get_vector_store()
     warn_if_store_out_of_sync(store)
+    candidate_retriever = get_candidate_retriever(store, hybrid=hybrid)
     reranker = get_reranker()
     answer_chain = build_answer_chain() if generate else None
 
@@ -233,7 +254,7 @@ def main(generate: bool, limit: int | None, delay: float, questions_path: Path, 
     for i, question in enumerate(tqdm(questions, unit="question")):
         if generate and i > 0:
             time.sleep(delay)
-        results.append(evaluate_question(question, store, reranker, answer_chain))
+        results.append(evaluate_question(question, candidate_retriever, reranker, answer_chain))
 
     summary = summarise(results)
     print_retrieval_report(summary, results)
@@ -243,7 +264,7 @@ def main(generate: bool, limit: int | None, delay: float, questions_path: Path, 
     if output:
         output.parent.mkdir(parents=True, exist_ok=True)
         with open(output, "w", encoding="utf-8") as f:
-            json.dump({"config": config_snapshot(), "summary": summary, "results": results},
+            json.dump({"config": config_snapshot(hybrid), "summary": summary, "results": results},
                       f, ensure_ascii=False, indent=2)
         print(f"\nSaved results to {output}")
 
@@ -255,5 +276,8 @@ if __name__ == "__main__":
     parser.add_argument("--delay", type=float, default=4.0, help="Seconds between LLM calls (default 4).")
     parser.add_argument("--questions", type=Path, default=config.EVAL_QUESTIONS_FILE, help="Labelled questions file.")
     parser.add_argument("--output", type=Path, help="Save per-question results and metrics as JSON.")
+    parser.add_argument("--retrieval", choices=["vector", "hybrid"],
+                        default="hybrid" if config.HYBRID_SEARCH else "vector",
+                        help="Candidate retrieval to evaluate (default from config.HYBRID_SEARCH).")
     args = parser.parse_args()
-    main(args.generate, args.limit, args.delay, args.questions, args.output)
+    main(args.generate, args.limit, args.delay, args.questions, args.output, hybrid=args.retrieval == "hybrid")

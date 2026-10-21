@@ -77,12 +77,13 @@ def test_is_refusal():
 # evaluate_question / summarise
 # --------------------------------------------------------------------------
 
-class FakeStore:
+class FakeRetriever:
+    """Candidate retriever returning one chunk per source, in order."""
     def __init__(self, sources):
         self.sources = sources
 
-    def similarity_search(self, query, k):
-        return [doc(s) for s in self.sources[:k]]
+    def invoke(self, query):
+        return [doc(s) for s in self.sources]
 
 
 class FakeReranker:
@@ -102,19 +103,39 @@ class FakeAnswerChain:
 def test_evaluate_question_scores_both_stages():
     question = {"id": "q", "category": "mh_fact", "question": "?", "sources": ["Rathalos"],
                 "answer_contains": ["Dragon"]}
-    store = FakeStore(["Tigrex", "Rathalos", "Rathian"])
-    result = evaluate_question(question, store, FakeReranker(), FakeAnswerChain("Dragon."))
+    store = FakeRetriever(["Tigrex", "Rathalos", "Rathian"])
+    result = evaluate_question(question, store, FakeReranker(), FakeAnswerChain("Dragon [2]."))
     assert result["base_rank"] == 2
     assert result["reranked_rank"] == 2
     assert result["retrieved"] == ["Rathian", "Rathalos"]
     assert result["answer_correct"] is True
+    assert result["cited_sources"] == ["Rathalos"]
+    assert result["citation_correct"] is True
+
+
+def test_citing_only_the_wrong_page_is_a_citation_miss():
+    question = {"id": "q", "category": "mh_fact", "question": "?", "sources": ["Rathalos"],
+                "answer_contains": ["Dragon"]}
+    store = FakeRetriever(["Tigrex", "Rathalos", "Rathian"])
+    result = evaluate_question(question, store, FakeReranker(), FakeAnswerChain("Dragon [1]."))
+    assert result["cited_sources"] == ["Rathian"]
+    assert result["answer_correct"] is True
+    assert result["citation_correct"] is False
 
 
 def test_out_of_scope_question_is_scored_on_refusal_only():
     question = {"id": "q", "category": "out_of_scope", "question": "?", "sources": [], "answer_contains": []}
-    result = evaluate_question(question, FakeStore(["Tigrex"]), FakeReranker(), FakeAnswerChain("I don't know."))
+    result = evaluate_question(question, FakeRetriever(["Tigrex"]), FakeReranker(), FakeAnswerChain("I don't know."))
     assert "base_rank" not in result
     assert result["answer_correct"] is True
+    assert result["citation_correct"] is True
+
+
+def test_out_of_scope_answer_citing_a_block_is_a_citation_miss():
+    question = {"id": "q", "category": "out_of_scope", "question": "?", "sources": [], "answer_contains": []}
+    answer = FakeAnswerChain("I don't know, but see [1].")
+    result = evaluate_question(question, FakeRetriever(["Tigrex"]), FakeReranker(), answer)
+    assert result["citation_correct"] is False
 
 
 def test_failed_llm_call_is_recorded_not_scored():
@@ -123,21 +144,23 @@ def test_failed_llm_call_is_recorded_not_scored():
             raise RuntimeError("429 rate limited")
 
     question = {"id": "q", "category": "mh_fact", "question": "?", "sources": ["Rathalos"], "answer_contains": []}
-    result = evaluate_question(question, FakeStore(["Rathalos"]), FakeReranker(), FailingChain())
+    result = evaluate_question(question, FakeRetriever(["Rathalos"]), FakeReranker(), FailingChain())
     assert "answer_correct" not in result
     assert "429" in result["answer_error"]
 
 
 def test_summarise_excludes_out_of_scope_from_retrieval():
     results = [
-        {"category": "mh_fact", "base_rank": 1, "reranked_rank": 1, "answer_correct": True},
-        {"category": "mh_fact", "base_rank": None, "reranked_rank": None, "answer_correct": False},
-        {"category": "out_of_scope", "answer_correct": True},
+        {"category": "mh_fact", "base_rank": 1, "reranked_rank": 1, "answer_correct": True, "citation_correct": True},
+        {"category": "mh_fact", "base_rank": None, "reranked_rank": None, "answer_correct": False,
+         "citation_correct": False},
+        {"category": "out_of_scope", "answer_correct": True, "citation_correct": True},
     ]
     summary = summarise(results)
     assert summary["all"]["retrieval_scored"] == 2
     assert summary["all"]["reranked"]["hit@1"] == 0.5
     assert summary["all"]["answer_accuracy"] == pytest.approx(2 / 3)
+    assert summary["all"]["citation_accuracy"] == pytest.approx(2 / 3)
     assert "base" not in summary["out_of_scope"]
 
 
@@ -145,7 +168,14 @@ def test_summarise_excludes_out_of_scope_from_retrieval():
 # The question set itself
 # --------------------------------------------------------------------------
 
-CATEGORIES = {"mh_fact", "mh_paraphrase", "wiki_fact", "out_of_scope"}
+CATEGORIES = {
+    "mh_fact", "mh_paraphrase", "wiki_fact",
+    "variant",          # look-alike monsters, e.g. Azure Rathalos vs Rathalos
+    "cross_page",       # comparisons needing facts from two pages
+    "keyword",          # rare exact terms such as Japanese names and quest titles
+    "lost_content",     # facts only in chunks the original length filter dropped
+    "out_of_scope",
+}
 
 
 def test_questions_are_well_formed():
