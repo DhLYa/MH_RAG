@@ -100,15 +100,18 @@ rag/
     pipeline.py     orchestration and command-line entry point
     api.py          FastAPI serving layer
 documents/          the corpus as JSON files
-notebooks/          exploration and retrieval inspection
+notebooks/
+    build_corpus.ipynb  fetches both sources and writes the corpus JSON files
+    archive/            earlier exploration notebooks, kept for reference
 tests/              unit tests for the pure-logic components
 ```
 
 ## Data
 
-The corpus is composed from two sources totalling 502 documents. Pages from both
-are selected by category rather than listed by hand, so the corpus is
-reproducible from the category names.
+The corpus is composed from two sources totalling 502 documents, and is rebuilt
+from source by running `notebooks/build_corpus.ipynb`. Monster Hunter Wiki pages
+are selected by category; the Wikipedia articles are a fixed list of titles in
+the notebook, since the consoles and sales list sit outside the series category.
 
 The first is 33 English Wikipedia articles covering the Monster Hunter series,
 its individual titles and spin-offs, the consoles they released on, and a list
@@ -177,11 +180,12 @@ under 80 characters, which catches stranded section headings but will also drop 
 passages that carry genuine information. A more targeted rule, matching heading-like
 segments rather than filtering purely on length, would avoid false positives.
 
-**Update notebook functionality.** The notebooks in /notebooks contain rough ingestion code 
-for the Wikipedia and MonsterHunterWiki.org APIs. Consolidating them and repurposing them to write the
-.json data files would be a step towards making the corpus more easily rebuildable from source.
-
 ## Completed
+
+**Corpus rebuildable from source.** The rough ingestion code for the Wikipedia and
+MonsterHunterWiki.org APIs was consolidated into `notebooks/build_corpus.ipynb`, which
+writes both JSON files and reports what changed against the previous version. The
+exploration notebooks it replaced are kept in `notebooks/archive/`.
 
 **LLM outputs do not yet carry citations.** Chunk metadata includes the source article and the
 reranker's relevance score, but the current chain discards both after formatting the
