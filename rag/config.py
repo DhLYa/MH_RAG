@@ -16,7 +16,7 @@ LLM_MODEL = "gemini-3.5-flash-lite"
 
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 120
-MIN_CHUNK_CHARS = 80
+MIN_CHUNK_CHARS = 10    # floor for stray fragments; headings are filtered by shape, not length
 
 RETRIEVAL_K = 20
 RERANK_K = 5

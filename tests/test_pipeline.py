@@ -4,7 +4,7 @@ import pytest
 from langchain_core.documents import Document
 
 from rag.chain import ask, build_prompt, cited_indices, format_docs
-from rag.chunking import chunk_documents
+from rag.chunking import chunk_documents, is_heading_only
 from rag.config import MIN_CHUNK_CHARS
 from rag.ingest import load_documents
 from rag.vectorstore import chunk_id, is_empty, remove_stale_chunks, upsert_chunks
@@ -45,18 +45,49 @@ def test_chunk_id_differs_on_corpus():
 # chunk_documents
 # --------------------------------------------------------------------------
 
+def chunk_bodies(doc):
+    """Chunk text without the "Source: <title>" prefix."""
+    return [c.page_content.split("\n\n", 1)[1].strip() for c in chunk_documents([doc])]
+
+
 def test_no_chunk_below_minimum_length():
-    """Bare section headings in wikipedia corpus became content-less chunks, the filter removes them."""
     doc = make_doc("Physiology\n\n" + "The Agnaktor is a magmatic Leviathan. " * 40)
-    for chunk in chunk_documents([doc]):
-        body = chunk.page_content.split("\n\n", 1)[1]
-        assert len(body.strip()) >= MIN_CHUNK_CHARS
+    for body in chunk_bodies(doc):
+        assert len(body) >= MIN_CHUNK_CHARS
 
 
 def test_bare_heading_does_not_survive_as_a_chunk():
+    """Bare section headings in the Wikipedia corpus became content-less chunks."""
     doc = make_doc("Physiology\n\n" + "The Agnaktor is a magmatic Leviathan. " * 40)
-    bodies = [c.page_content.split("\n\n", 1)[1].strip() for c in chunk_documents([doc])]
-    assert "Physiology" not in bodies
+    assert "Physiology" not in chunk_bodies(doc)
+
+
+def test_short_sentence_survives_as_a_chunk():
+    """The old 80-character filter dropped short facts such as this one."""
+    doc = make_doc("The Agnaktor is a magmatic Leviathan. " * 40 + "\n\nThe Gore Magala is genderless.")
+    assert "The Gore Magala is genderless." in chunk_bodies(doc)
+
+
+def test_no_chunk_starts_with_the_previous_sentences_full_stop():
+    """With the default splitter, ". " moved to the start of the next chunk, leaving tails like ". After..."."""
+    doc = make_doc("The Agnaktor is a magmatic Leviathan. " * 60)
+    bodies = chunk_bodies(doc)
+    assert len(bodies) > 1
+    for body in bodies:
+        assert not body.startswith(".")
+
+
+def test_is_heading_only():
+    assert is_heading_only("Gameplay")
+    assert is_heading_only("Plot\nRise arc")
+    assert is_heading_only("== References ==")
+    assert not is_heading_only("The Gore Magala is genderless.")
+    assert not is_heading_only("Remote Play interactivity with the PlayStation 4 and PlayStation 5")
+
+
+def test_infobox_lines_are_not_mistaken_for_headings():
+    """Infobox lines are short and unpunctuated like headings, but hold the key monster attributes."""
+    assert not is_heading_only("Classification: Flying Wyvern\nElements: Fire\nWeakest To: Dragon")
 
 
 def test_metadata_survives_chunking():

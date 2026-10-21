@@ -28,7 +28,7 @@ each marked `cited` true or false.
 ```
 Wikipedia API + Monster Hunter Wiki API
     -> ingest       One document per article from JSON files
-    -> chunking     recursive character split with structural chunking + character based filtering
+    -> chunking     recursive character split at section, paragraph and sentence ends; heading-only chunks dropped
     -> vectorstore  Voyage embeddings, Chroma, content-hash deduplication
     -> retrieval    top-20 by vector similarity
     -> reranking    Voyage cross-encoder, top-20 -> top-5
@@ -46,7 +46,22 @@ splitter turned these into chunks with nothing to retrieve, in both corpora.
 Filtering on the text alone cannot reliably tell a heading from a short sentence, so the fix
 uses the page structure. When scraping the HTML, a heading is held back and written only once
 a prose block follows it; if another heading arrives first, it replaces the held one. The
-minimum chunk length filter remains as a backstop for the Wikipedia plain-text extracts.
+Wikipedia plain-text extracts have no HTML to use, so the chunker drops chunks made only of
+headings, as described below.
+
+### Short facts were lost to the length filter
+The first fix for bare headings dropped every chunk under 80 characters. Of the 209 chunks it
+removed, 190 were headings, but the rest were real sentences, some found nowhere else in the
+corpus: "the Gore Magala is genderless", "Bleem! were subsequently forced to shut down in
+November 2001". They were short because the splitter, when breaking a long paragraph at a
+sentence boundary, attached the ". " separator to the next piece, leaving tails such as
+". After Ratha comes to his senses..." as chunks of their own.
+
+The splitter now keeps each separator with the sentence it ends, and the length filter was
+replaced by one that recognises headings by shape: short lines with no punctuation. The first
+version of that rule would have dropped all 471 monster infobox chunks, since lines like
+"Weakest To: Thunder" are just as short and unpunctuated; counting a colon as content fixed it,
+and a test now guards against it.
 
 ### Duplicate chunk IDs rejected on ingestion
 Chunk IDs are a hash of each chunk's corpus, source page and text, so re-running ingestion
@@ -116,7 +131,7 @@ ruff check rag tests
 rag/
     config.py       paths, models, and hyperparameters in one place
     ingest.py       loads the JSON corpus into Documents
-    chunking.py     splitting and the minimum-length filter
+    chunking.py     splitting and the heading-only filter
     vectorstore.py  embeddings, Chroma, deduplication, retriever, reranker
     chain.py        prompt, language model, and the LCEL retrieval chain
     pipeline.py     orchestration and command-line entry point
@@ -193,19 +208,14 @@ retrieval missed entirely.
 
 **Evaluation is keyword-based and the question set is small.** `rag.evaluate` scores
 retrieval against labelled source pages and checks answers for expected terms, which avoids
-an LLM judge and stays within free tiers. Term matching cannot judge paraphrased or partially
-correct answers; an LLM-as-judge framework such as RAGAS would, at the cost of more calls
-than Gemini's free tier allows. Most questions name their subject, so retrieval scores are
-near ceiling; harder questions (comparisons, facts spread across pages, variants such as
-Rathalos and Azure Rathalos) would separate configurations better.
+an LLM judge and stays within free tiers. Term matching cannot judge paraphrased answers: two
+correct answers ("highly intelligent", "lacks any determinable sex") were scored wrong until
+their labels accepted those wordings. An LLM-as-judge framework such as RAGAS would handle
+this, at the cost of more calls than Gemini's free tier allows. With 60 questions, one
+question is worth almost two points of accuracy, so small differences between runs are noise.
 
 **No caching layer.** Caching both common queries and their generated answers would avoid
 repeat API calls, reducing latency and token consumption.
-
-**Chunk filtering can discard real content.** The minimum-length filter removes any chunk
-under 80 characters, which catches stranded section headings but will also drop short
-passages that carry genuine information. A more targeted rule, matching heading-like
-segments rather than filtering purely on length, would avoid false positives.
 
 ## Completed
 
