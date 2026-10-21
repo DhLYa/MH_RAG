@@ -4,7 +4,7 @@ from langchain_chroma import Chroma
 
 from .chain import ask, build_chain
 from .chunking import chunk_documents
-from .config import HYBRID_SEARCH, RERANK_K
+from .config import CORPORA, HYBRID_SEARCH, RERANK_K
 from .ingest import load_documents
 from .vectorstore import (
     get_candidate_retriever,
@@ -53,11 +53,11 @@ def print_retrieval(candidate_retriever, reranker, question):
         print(f"  {i}. {d.metadata.get('source')}   score={score}")
         print(f"     {d.page_content[:150].strip()}")
 
-def main(retrieval_only: bool = False):
+def main(retrieval_only: bool = False, corpus: str | None = None):
     store = ingest()
 
     reranker = get_reranker()
-    candidate_retriever = get_candidate_retriever(store)
+    candidate_retriever = get_candidate_retriever(store, corpus=corpus)
 
     if retrieval_only:
         chain = None
@@ -65,6 +65,8 @@ def main(retrieval_only: bool = False):
     else:
         chain = build_chain(get_compression_retriever(reranker, candidate_retriever))
         mode = "RAG ready"
+    if corpus:
+        mode += f" (searching {corpus} only)"
 
     print(f"\n{mode}, Ask a question. (empty line to quit).")
     while True:
@@ -86,5 +88,10 @@ if __name__ == "__main__":
         action="store_true",
         help="Inspect retrieved chunks and scores without unnecessary LLM calls.",
     )
+    parser.add_argument(
+        "--corpus",
+        choices=CORPORA,
+        help="Search one corpus only (default: both).",
+    )
     args = parser.parse_args()
-    main(retrieval_only=args.retrieval_only)
+    main(retrieval_only=args.retrieval_only, corpus=args.corpus)

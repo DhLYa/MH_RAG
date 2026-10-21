@@ -7,6 +7,8 @@ PAGES_FILES = [
     Path("documents/wikipedia_pages.json"),
     Path("documents/mh_wiki_monsters.json"),
 ]
+# Each chunk's "corpus" metadata is its file's name, so these are the values retrieval can filter on
+CORPORA = tuple(path.stem for path in PAGES_FILES)
 CHROMA_DIR = Path("chroma_db")
 EVAL_QUESTIONS_FILE = Path("evaluation/questions.json")
 

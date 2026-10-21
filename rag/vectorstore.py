@@ -75,35 +75,37 @@ def get_reranker(k: int = RERANK_K):
     reranker = VoyageAIRerank(model=RERANKER_MODEL, top_k=k)
     return reranker
 
-def get_retriever(store: Chroma, k: int = RETRIEVAL_K):
-    retriever = store.as_retriever(
-    search_kwargs={"k": k}
-)
-    return retriever
+def get_retriever(store: Chroma, k: int = RETRIEVAL_K, corpus: str | None = None):
+    search_kwargs = {"k": k}
+    if corpus:
+        search_kwargs["filter"] = {"corpus": corpus}
+    return store.as_retriever(search_kwargs=search_kwargs)
 
 def tokenise(text: str) -> list[str]:
     """Lower-cased words, so "Rathalos," in a chunk matches "rathalos" in a question."""
     return re.findall(r"\w+", text.lower())
 
-def get_bm25_retriever(store: Chroma, k: int = BM25_K) -> BM25Retriever:
-    """Keyword index over every stored chunk, built in memory from the store's text."""
-    data = store.get(include=["documents", "metadatas"])
+def get_bm25_retriever(store: Chroma, k: int = BM25_K, corpus: str | None = None) -> BM25Retriever:
+    """Keyword index over the stored chunks, or one corpus's chunks, built in memory from the store."""
+    where = {"corpus": corpus} if corpus else None
+    data = store.get(where=where, include=["documents", "metadatas"])
     docs = [
         Document(page_content=text, metadata=metadata)
         for text, metadata in zip(data["documents"], data["metadatas"])
     ]
     return BM25Retriever.from_documents(docs, k=k, preprocess_func=tokenise)
 
-def get_candidate_retriever(store: Chroma, hybrid: bool = HYBRID_SEARCH):
+def get_candidate_retriever(store: Chroma, hybrid: bool = HYBRID_SEARCH, corpus: str | None = None):
     """
-    Candidates for the reranker. With hybrid search, vector and BM25 keyword results are
-    merged by reciprocal rank fusion, so a rare exact term such as a Japanese name can reach
-    the reranker even when its embedding isn't close to the question's.
+    Candidates for the reranker, optionally from one corpus only. With hybrid search, vector
+    and BM25 keyword results are merged by reciprocal rank fusion, so a rare exact term such
+    as a Japanese name can reach the reranker even when its embedding isn't close to the question's.
     """
-    vector = get_retriever(store)
+    vector = get_retriever(store, corpus=corpus)
     if not hybrid:
         return vector
-    return EnsembleRetriever(retrievers=[vector, get_bm25_retriever(store)], weights=[0.5, 0.5])
+    keyword = get_bm25_retriever(store, corpus=corpus)
+    return EnsembleRetriever(retrievers=[vector, keyword], weights=[0.5, 0.5])
 
 def get_compression_retriever(reranker, retriever):
     compression_retriever = ContextualCompressionRetriever(
