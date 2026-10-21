@@ -112,9 +112,9 @@
    "sources": ["Rathalos"], "answer_contains": ["Slay the Rathalos"]},
 
   {"id": "gore-magala-gender", "category": "lost_content", "question": "What is the gender of Gore Magala, and why?",
-   "sources": ["Gore Magala"], "answer_contains": [["genderless", "no gender", "neither"]]},
+   "sources": ["Gore Magala"], "answer_contains": [["genderless", "no gender", "determinable sex"]]},
   {"id": "baggi-reputation", "category": "lost_content", "question": "What is the Baggi well-regarded for?",
-   "sources": ["Baggi"], "answer_contains": ["intelligence"]},
+   "sources": ["Baggi"], "answer_contains": [["intelligence", "intelligent"]]},
   {"id": "bleem-shutdown", "category": "lost_content", "question": "When was Bleem! forced to shut down?",
    "sources": ["PlayStation_(console)"], "answer_contains": ["November 2001"]},
 
