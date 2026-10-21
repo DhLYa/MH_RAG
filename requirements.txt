@@ -1,17 +1,15 @@
-langchain
-langchain-classic
-langchain-chroma
-langchain-community
-langchain-core
-langchain-google-genai
-langchain-text-splitters
-langchain-voyageai
-chromadb
-fastapi
-uvicorn
-python-dotenv
-rank-bm25
-requests
-beautifulsoup4
-tqdm
-wikipedia-api
+# Pinned to the versions the pipeline and every evaluation in evaluation/results ran on.
+# Corpus-building packages are in requirements-corpus.txt, test and lint tools in requirements-dev.txt.
+langchain-classic==1.0.8
+langchain-chroma==1.1.0
+langchain-community==0.3.31
+langchain-core==1.5.0
+langchain-google-genai==4.3.0
+langchain-text-splitters==1.1.2
+langchain-voyageai==0.4.0
+chromadb==1.5.9
+fastapi==0.139.0
+uvicorn==0.49.0
+python-dotenv==1.2.2
+rank-bm25==0.2.2
+tqdm==4.68.3

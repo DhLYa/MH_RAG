@@ -1,6 +1,11 @@
 .env
 *.pyc
+*.egg-info/
+build/
 documents/*
 !documents/.gitkeep
+# The corpus is committed so a clone runs without rebuilding it; anything else in documents/ stays local
+!documents/wikipedia_pages.json
+!documents/mh_wiki_monsters.json
 chroma_db/*
 !chroma_db/.gitkeep

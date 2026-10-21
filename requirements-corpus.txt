@@ -1,0 +1,4 @@
+# Only needed to rebuild the corpus with notebooks/build_corpus.ipynb.
+requests==2.34.2
+beautifulsoup4==4.15.0
+wikipedia-api==0.15.0
