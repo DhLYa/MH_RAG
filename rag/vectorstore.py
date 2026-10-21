@@ -1,11 +1,21 @@
 import hashlib
- 
+import re
+
 from langchain_chroma import Chroma
+from langchain_classic.retrievers import ContextualCompressionRetriever, EnsembleRetriever
+from langchain_community.retrievers import BM25Retriever
 from langchain_core.documents import Document
 from langchain_voyageai import VoyageAIEmbeddings, VoyageAIRerank
-from langchain_classic.retrievers import ContextualCompressionRetriever
- 
-from .config import EMBEDDING_MODEL, RERANKER_MODEL, CHROMA_DIR, RETRIEVAL_K, RERANK_K
+
+from .config import (
+    BM25_K,
+    CHROMA_DIR,
+    EMBEDDING_MODEL,
+    HYBRID_SEARCH,
+    RERANK_K,
+    RERANKER_MODEL,
+    RETRIEVAL_K,
+)
 
 def get_embedding_model() -> VoyageAIEmbeddings:
     embedding_model = VoyageAIEmbeddings(model=EMBEDDING_MODEL)
@@ -70,6 +80,30 @@ def get_retriever(store: Chroma, k: int = RETRIEVAL_K):
     search_kwargs={"k": k}
 )
     return retriever
+
+def tokenise(text: str) -> list[str]:
+    """Lower-cased words, so "Rathalos," in a chunk matches "rathalos" in a question."""
+    return re.findall(r"\w+", text.lower())
+
+def get_bm25_retriever(store: Chroma, k: int = BM25_K) -> BM25Retriever:
+    """Keyword index over every stored chunk, built in memory from the store's text."""
+    data = store.get(include=["documents", "metadatas"])
+    docs = [
+        Document(page_content=text, metadata=metadata)
+        for text, metadata in zip(data["documents"], data["metadatas"])
+    ]
+    return BM25Retriever.from_documents(docs, k=k, preprocess_func=tokenise)
+
+def get_candidate_retriever(store: Chroma, hybrid: bool = HYBRID_SEARCH):
+    """
+    Candidates for the reranker. With hybrid search, vector and BM25 keyword results are
+    merged by reciprocal rank fusion, so a rare exact term such as a Japanese name can reach
+    the reranker even when its embedding isn't close to the question's.
+    """
+    vector = get_retriever(store)
+    if not hybrid:
+        return vector
+    return EnsembleRetriever(retrievers=[vector, get_bm25_retriever(store)], weights=[0.5, 0.5])
 
 def get_compression_retriever(reranker, retriever):
     compression_retriever = ContextualCompressionRetriever(
