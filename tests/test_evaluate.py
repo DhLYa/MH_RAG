@@ -145,7 +145,14 @@ def test_summarise_excludes_out_of_scope_from_retrieval():
 # The question set itself
 # --------------------------------------------------------------------------
 
-CATEGORIES = {"mh_fact", "mh_paraphrase", "wiki_fact", "out_of_scope"}
+CATEGORIES = {
+    "mh_fact", "mh_paraphrase", "wiki_fact",
+    "variant",          # look-alike monsters, e.g. Azure Rathalos vs Rathalos
+    "cross_page",       # comparisons needing facts from two pages
+    "keyword",          # rare exact terms such as Japanese names and quest titles
+    "lost_content",     # facts only in chunks the original length filter dropped
+    "out_of_scope",
+}
 
 
 def test_questions_are_well_formed():
