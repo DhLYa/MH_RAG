@@ -78,7 +78,11 @@ conda activate MH_RAG
 pip install -r requirements.txt
 ```
 
-For development, `requirements-dev.txt` adds pytest and ruff, which CI runs on every push.
+Versions are pinned to the ones every evaluation in `evaluation/results` ran on. Two extra files
+cover the rest: `requirements-dev.txt` adds pytest and ruff, which CI runs on every push, and
+`requirements-corpus.txt` adds the scraping packages that `notebooks/build_corpus.ipynb` needs.
+`pip install -e .` installs the `rag` package itself, so its commands also work from outside the
+repository.
 
 Create a `.env` in the repository root containing API_KEY variables:
 
@@ -93,7 +97,7 @@ Both have usable free tiers:
 (below) when iterating on retrieval.
 
 ## Running
-All commands run from the repository root.
+Commands run from the repository root, or from anywhere after `pip install -e .`.
 
 Interactive question answering: First run embeds the full corpus; later runs reuse the persisted store and starts immediately.
 
@@ -115,7 +119,8 @@ Search one corpus only, `wikipedia_pages` (series and sales history) or `mh_wiki
 python -m rag.pipeline --corpus mh_wiki_monsters
 ```
 
-API, with the interactive docs at `http://localhost:8000/docs`. `corpus` is optional:
+API, with the interactive docs at `http://localhost:8000/docs`. `corpus` is optional. If Voyage or
+Gemini fails, `/query` returns 503 with a plain message, saying so when the free tier is rate limiting:
 
 ```bash
 uvicorn rag.api:app
@@ -129,9 +134,13 @@ each LLM answer for the expected terms, or for a refusal on out-of-scope questio
 
 ```bash
 python -m rag.evaluate
-python -m rag.evaluate --generate --output evaluation/results/baseline.json
+python -m rag.evaluate --generate --output evaluation/results/my-run.json
 python -m rag.evaluate --retrieval vector     # compare against vector search alone
 ```
+
+Saved runs are in `evaluation/results`, each with the settings it ran on. `baseline.json` predates
+the extended question set and covers only the original 42 questions, so compare new runs against
+`baseline-v2.json` or later.
 
 Tests and lint. The tests use fakes in place of the APIs, so they need no keys:
 
@@ -164,7 +173,8 @@ tests/              unit tests, with fakes standing in for the APIs
 
 ## Data
 
-The corpus is composed from two sources totalling 505 documents, and is rebuilt
+The corpus is composed from two sources totalling 505 documents. It is committed in
+`documents/`, so a clone can build the vector store straight away, and it can be rebuilt
 from source by running `notebooks/build_corpus.ipynb`. Monster Hunter Wiki pages
 are selected by category; the Wikipedia articles are a fixed list of titles in
 the notebook, since the consoles and sales list sit outside the series category.
@@ -211,6 +221,20 @@ sectioned, so semantic chunking's advantage is modest here, while it costs an ad
 embedding pass over every sentence to determine boundaries. The splitter is configured to
 prefer section and paragraph boundaries before falling back to more arbitrary cuts.
 
+**Headings filtered by shape, not length.** A chunk is dropped only when every line looks like a
+heading: short, with no punctuation. Short sentences and infobox lines such as "Weakest To:
+Thunder" are kept. The problem write-up above explains why a length cut-off wasn't enough.
+
+**Inline citations.** Passages reach the model numbered [1] to [5], and it cites the ones it
+used after each statement. Only cited sources are listed under the answer, so a reader sees
+what supports it rather than everything that was retrieved; the API returns all five with a
+`cited` flag. Evaluation scores citations separately from answers, since a correct answer can
+cite the wrong page.
+
+**Deterministic answers.** Gemini runs at temperature 0, so the same question with the same
+passages gives the same answer. Without it, two evaluation runs of identical code could disagree,
+and with 60 questions a single changed answer moves accuracy by almost two points.
+
 **Retrieval and serving are separated.** `chain.py` contains no ingestion or storage
 logic, so the serving layer imports it without triggering corpus loading. The chain is
 built once at application startup rather than per request.
@@ -251,9 +275,13 @@ exploration notebooks it replaced are kept in `notebooks/archive/`.
 alongside the answer, so the CLI and API list each source's title, corpus and relevance
 score rather than discarding them after formatting the context.
 
-**Retrieval-only mode.** `--retrieval-only` shows the base and reranked results with their
-scores without calling the LLM, so retrieval quality can be diagnosed without consuming
-generation quota.
+**Retrieval-only mode.** `--retrieval-only` shows the fused candidates and the reranked
+passages with their relevance scores without calling the LLM, so retrieval quality can be
+diagnosed without consuming generation quota.
+
+**Reproducible setup.** Dependencies are pinned, the corpus is committed, and
+`pyproject.toml` makes the package installable, so a fresh clone installs the same versions
+the evaluations ran on and works without rebuilding the corpus first.
 
 **Test coverage and CI.** The tests cover loading, chunking, ID generation, deduplication,
 stale-chunk removal, context formatting, the API's responses and the evaluation scoring, all
