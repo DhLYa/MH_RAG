@@ -1,0 +1,879 @@
+{
+  "config": {
+    "EMBEDDING_MODEL": "voyage-4-large",
+    "RERANKER_MODEL": "rerank-2.5",
+    "LLM_MODEL": "gemini-3.5-flash-lite",
+    "CHUNK_SIZE": 800,
+    "CHUNK_OVERLAP": 120,
+    "MIN_CHUNK_CHARS": 80,
+    "RETRIEVAL_K": 20,
+    "RERANK_K": 5
+  },
+  "summary": {
+    "all": {
+      "questions": 42,
+      "retrieval_scored": 38,
+      "base": {
+        "hit@1": 0.9473684210526315,
+        "hit@5": 1.0,
+        "hit@20": 1.0,
+        "mrr": 0.9736842105263158
+      },
+      "reranked": {
+        "hit@1": 0.9736842105263158,
+        "hit@5": 1.0,
+        "mrr": 0.9868421052631579
+      },
+      "answer_accuracy": 1.0
+    },
+    "mh_fact": {
+      "questions": 16,
+      "retrieval_scored": 16,
+      "base": {
+        "hit@1": 0.875,
+        "hit@5": 1.0,
+        "hit@20": 1.0,
+        "mrr": 0.9375
+      },
+      "reranked": {
+        "hit@1": 0.9375,
+        "hit@5": 1.0,
+        "mrr": 0.96875
+      },
+      "answer_accuracy": 1.0
+    },
+    "mh_paraphrase": {
+      "questions": 8,
+      "retrieval_scored": 8,
+      "base": {
+        "hit@1": 1.0,
+        "hit@5": 1.0,
+        "hit@20": 1.0,
+        "mrr": 1.0
+      },
+      "reranked": {
+        "hit@1": 1.0,
+        "hit@5": 1.0,
+        "mrr": 1.0
+      },
+      "answer_accuracy": 1.0
+    },
+    "wiki_fact": {
+      "questions": 14,
+      "retrieval_scored": 14,
+      "base": {
+        "hit@1": 1.0,
+        "hit@5": 1.0,
+        "hit@20": 1.0,
+        "mrr": 1.0
+      },
+      "reranked": {
+        "hit@1": 1.0,
+        "hit@5": 1.0,
+        "mrr": 1.0
+      },
+      "answer_accuracy": 1.0
+    },
+    "out_of_scope": {
+      "questions": 4,
+      "answer_accuracy": 1.0
+    }
+  },
+  "results": [
+    {
+      "id": "rathalos-weakness",
+      "category": "mh_fact",
+      "question": "What elements is Rathalos weakest to?",
+      "expected_sources": [
+        "Rathalos"
+      ],
+      "retrieved": [
+        "Rathalos",
+        "Zenith Rathalos",
+        "Silver Rathalos",
+        "Azure Rathalos",
+        "Dreadking Rathalos"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Rathalos is weakest to Water, Ice, and Dragon.",
+      "answer_correct": true
+    },
+    {
+      "id": "zinogre-element",
+      "category": "mh_fact",
+      "question": "What element does Zinogre use?",
+      "expected_sources": [
+        "Zinogre"
+      ],
+      "retrieved": [
+        "Zinogre",
+        "Zinogre",
+        "Thunderlord Zinogre",
+        "Stygian Zinogre",
+        "Howling Zinogre"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Zinogre uses the Thunder element.",
+      "answer_correct": true
+    },
+    {
+      "id": "nergigante-weakness",
+      "category": "mh_fact",
+      "question": "What is Nergigante weak to?",
+      "expected_sources": [
+        "Nergigante"
+      ],
+      "retrieved": [
+        "Nergigante",
+        "Ruiner Nergigante",
+        "Omega Planetes",
+        "Omega Micros",
+        "Morudomunto"
+      ],
+      "base_rank": 2,
+      "reranked_rank": 1,
+      "answer": "Nergigante is weakest to Thunder.",
+      "answer_correct": true
+    },
+    {
+      "id": "mizutsune-class",
+      "category": "mh_fact",
+      "question": "What classification of monster is Mizutsune?",
+      "expected_sources": [
+        "Mizutsune"
+      ],
+      "retrieved": [
+        "Mizutsune",
+        "Soulseer Mizutsune",
+        "Apex Mizutsune",
+        "Mizutsune",
+        "Violet Mizutsune"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Mizutsune is classified as a Leviathan.",
+      "answer_correct": true
+    },
+    {
+      "id": "brachydios-debut",
+      "category": "mh_fact",
+      "question": "In which game was Brachydios first introduced?",
+      "expected_sources": [
+        "Brachydios"
+      ],
+      "retrieved": [
+        "Brachydios",
+        "Brachydios",
+        "Brachydios",
+        "Brachydios",
+        "Brachydios"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Brachydios was first introduced in Monster Hunter 3 Ultimate.",
+      "answer_correct": true
+    },
+    {
+      "id": "kushala-alias",
+      "category": "mh_fact",
+      "question": "What is Kushala Daora's Japanese alias?",
+      "expected_sources": [
+        "Kushala Daora"
+      ],
+      "retrieved": [
+        "Kushala Daora",
+        "Risen Kushala Daora",
+        "Rusted Kushala Daora",
+        "Garbha Daora",
+        "Kushala Daora"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Steel Dragon",
+      "answer_correct": true
+    },
+    {
+      "id": "nargacuga-debut",
+      "category": "mh_fact",
+      "question": "Which game introduced Nargacuga?",
+      "expected_sources": [
+        "Nargacuga"
+      ],
+      "retrieved": [
+        "Nargacuga",
+        "Nargacuga",
+        "Nargacuga",
+        "Nargacuga",
+        "Blinking Nargacuga"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Monster Hunter Freedom Unite",
+      "answer_correct": true
+    },
+    {
+      "id": "velkhana-weakness",
+      "category": "mh_fact",
+      "question": "What element is Velkhana weakest to?",
+      "expected_sources": [
+        "Velkhana"
+      ],
+      "retrieved": [
+        "Velkhana",
+        "Omega Planetes",
+        "Velkhana",
+        "Ukanlos",
+        "Jie Lung"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Velkhana is weakest to Fire.",
+      "answer_correct": true
+    },
+    {
+      "id": "gore-magala-status",
+      "category": "mh_fact",
+      "question": "What status effect does Gore Magala inflict?",
+      "expected_sources": [
+        "Gore Magala"
+      ],
+      "retrieved": [
+        "Gore Magala",
+        "Gore Magala",
+        "Chaotic Gore Magala",
+        "Gore Magala",
+        "Gore Magala"
+      ],
+      "base_rank": 2,
+      "reranked_rank": 1,
+      "answer": "Frenzy Virus",
+      "answer_correct": true
+    },
+    {
+      "id": "great-jagras-profile",
+      "category": "mh_fact",
+      "question": "What kind of monster is Great Jagras and what is it weak to?",
+      "expected_sources": [
+        "Great Jagras"
+      ],
+      "retrieved": [
+        "Great Jagras",
+        "Great Jaggi",
+        "Great Jagras",
+        "Great Jagras",
+        "Great Jagras"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "The Great Jagras is a Fanged Wyvern and it is weakest to Fire.",
+      "answer_correct": true
+    },
+    {
+      "id": "deviljho-related",
+      "category": "mh_fact",
+      "question": "Which monsters are related to Deviljho?",
+      "expected_sources": [
+        "Deviljho"
+      ],
+      "retrieved": [
+        "Feral Deviljho",
+        "Deviljho",
+        "Savage Deviljho",
+        "Savage Deviljho",
+        "Deviljho"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 2,
+      "answer": "Feral Deviljho, Savage Deviljho, Starved Deviljho, and Flame Tyrant are related to Deviljho.",
+      "answer_correct": true
+    },
+    {
+      "id": "arkveld-alias",
+      "category": "mh_fact",
+      "question": "What is the Japanese alias of Arkveld?",
+      "expected_sources": [
+        "Arkveld"
+      ],
+      "retrieved": [
+        "Arkveld",
+        "Guardian Arkveld",
+        "Arkveld",
+        "Guardian Arkveld",
+        "Araketa"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Chain Blade Wyvern",
+      "answer_correct": true
+    },
+    {
+      "id": "rathalos-counterpart",
+      "category": "mh_fact",
+      "question": "Which monster is the female counterpart of Rathalos?",
+      "expected_sources": [
+        "Rathalos",
+        "Rathian"
+      ],
+      "retrieved": [
+        "Rathian",
+        "Rathian",
+        "Apex Rathian",
+        "Rathian",
+        "Rathalos"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Rathian",
+      "answer_correct": true
+    },
+    {
+      "id": "malzeno-blight",
+      "category": "mh_fact",
+      "question": "Besides Dragonblight, what blight does Malzeno inflict?",
+      "expected_sources": [
+        "Malzeno"
+      ],
+      "retrieved": [
+        "Malzeno",
+        "Malzeno",
+        "Primordial Malzeno",
+        "Malzeno",
+        "Malzeno"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Besides Dragonblight, Malzeno inflicts Bloodblight.",
+      "answer_correct": true
+    },
+    {
+      "id": "teostra-weakness",
+      "category": "mh_fact",
+      "question": "What is Teostra weak to?",
+      "expected_sources": [
+        "Teostra"
+      ],
+      "retrieved": [
+        "Teostra",
+        "Risen Teostra",
+        "Lunastra",
+        "Toastra",
+        "Anteka"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Teostra is weakest to Dragon and Water.",
+      "answer_correct": true
+    },
+    {
+      "id": "gammoth-class",
+      "category": "mh_fact",
+      "question": "What classification is Gammoth?",
+      "expected_sources": [
+        "Gammoth"
+      ],
+      "retrieved": [
+        "Gammoth",
+        "Gammoth",
+        "Elderfrost Gammoth",
+        "Gammoth",
+        "Gammoth"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Gammoth is classified as a Fanged Beast.",
+      "answer_correct": true
+    },
+    {
+      "id": "wind-elder-dragon",
+      "category": "mh_paraphrase",
+      "question": "Which Elder Dragon can manipulate the wind and stir up tornadoes?",
+      "expected_sources": [
+        "Kushala Daora",
+        "Risen Kushala Daora",
+        "Rusted Kushala Daora"
+      ],
+      "retrieved": [
+        "Kushala Daora",
+        "Kushala Daora",
+        "Amatsu",
+        "Kushala Daora",
+        "Wind Serpent Ibushi"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Based on the provided context, multiple Elder Dragons can manipulate the wind and stir up tornadoes, specifically the Kushala Daora, the Amatsu, and the Wind Serpent Ibushi.",
+      "answer_correct": true
+    },
+    {
+      "id": "thunderbug-symbiosis",
+      "category": "mh_paraphrase",
+      "question": "Which monster has a symbiotic relationship with Thunderbugs?",
+      "expected_sources": [
+        "Apex Zinogre",
+        "Stygian Zinogre",
+        "Zinogre"
+      ],
+      "retrieved": [
+        "Zinogre",
+        "Zinogre",
+        "Zinogre",
+        "Zinogre",
+        "Zinogre"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Zinogre",
+      "answer_correct": true
+    },
+    {
+      "id": "xenojiiva-mature",
+      "category": "mh_paraphrase",
+      "question": "Which monster is the mature form of Xeno'jiiva?",
+      "expected_sources": [
+        "Safi'jiiva",
+        "Xeno'jiiva"
+      ],
+      "retrieved": [
+        "Safi'jiiva",
+        "Xeno'jiiva",
+        "Monster_Hunter_World: Iceborne",
+        "Xeno'jiiva",
+        "Safi'jiiva"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Safi'jiiva",
+      "answer_correct": true
+    },
+    {
+      "id": "slime-mold",
+      "category": "mh_paraphrase",
+      "question": "Which monster coats itself in an explosive slime mold?",
+      "expected_sources": [
+        "Brachydios",
+        "Raging Brachydios"
+      ],
+      "retrieved": [
+        "Brachydios",
+        "Brachydios",
+        "Raging Brachydios",
+        "Brachydios",
+        "Raging Brachydios"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "The Brachydios coats itself in an explosive slime mold.",
+      "answer_correct": true
+    },
+    {
+      "id": "qurio-host",
+      "category": "mh_paraphrase",
+      "question": "Which Elder Dragon acts as a host for the parasitic Qurio?",
+      "expected_sources": [
+        "Malzeno",
+        "Primordial Malzeno"
+      ],
+      "retrieved": [
+        "Malzeno",
+        "Gaismagorm",
+        "Malzeno",
+        "Primordial Malzeno",
+        "Primordial Malzeno"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Both the Malzeno and the Gaismagorm act as hosts for the parasitic Qurio.",
+      "answer_correct": true
+    },
+    {
+      "id": "blind-scales",
+      "category": "mh_paraphrase",
+      "question": "Which blind monster uses hair-like scales to sense its surroundings?",
+      "expected_sources": [
+        "Gore Magala"
+      ],
+      "retrieved": [
+        "Gore Magala",
+        "Gigginox",
+        "Gore Magala",
+        "Xu Wu",
+        "Khezu"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Gore Magala",
+      "answer_correct": true
+    },
+    {
+      "id": "lords-of-seas",
+      "category": "mh_paraphrase",
+      "question": "Which Leviathan is feared as the Lord of the Seas?",
+      "expected_sources": [
+        "Lagiacrus"
+      ],
+      "retrieved": [
+        "Lagiacrus",
+        "Lagiacrus",
+        "Abyssal Lagiacrus",
+        "Lagiacrus",
+        "Ceadeus"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Lagiacrus is feared as the Lord of the Seas.",
+      "answer_correct": true
+    },
+    {
+      "id": "blade-tail",
+      "category": "mh_paraphrase",
+      "question": "Which Brute Wyvern swings a metallic blade-like tail that can become superheated?",
+      "expected_sources": [
+        "Acidic Glavenus",
+        "Glavenus",
+        "Hellblade Glavenus"
+      ],
+      "retrieved": [
+        "Glavenus",
+        "Glavenus",
+        "Hellblade Glavenus",
+        "Glavenus",
+        "Rust Duramboros"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "The Glavenus is the Brute Wyvern that swings a massive, metallic blade-like tail which can become superheated.",
+      "answer_correct": true
+    },
+    {
+      "id": "original-platform",
+      "category": "wiki_fact",
+      "question": "What platform was the original Monster Hunter released on?",
+      "expected_sources": [
+        "Monster_Hunter",
+        "Monster_Hunter_(video_game)"
+      ],
+      "retrieved": [
+        "Monster_Hunter_(video_game)",
+        "Monster_Hunter",
+        "Monster_Hunter",
+        "Monster_Hunter_(video_game)",
+        "Monster_Hunter_(video_game)"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "The original Monster Hunter was released on the PlayStation 2.",
+      "answer_correct": true
+    },
+    {
+      "id": "world-sales",
+      "category": "wiki_fact",
+      "question": "How many copies has Monster Hunter: World shipped?",
+      "expected_sources": [
+        "Monster_Hunter: World"
+      ],
+      "retrieved": [
+        "Monster_Hunter: World",
+        "Monster_Hunter: World",
+        "Monster_Hunter: World",
+        "Monster_Hunter: World",
+        "Monster_Hunter: World"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Monster Hunter: World has shipped over 30 million copies by June 2026.",
+      "answer_correct": true
+    },
+    {
+      "id": "wilds-launch-sales",
+      "category": "wiki_fact",
+      "question": "How many copies did Monster Hunter Wilds sell in its first three days?",
+      "expected_sources": [
+        "Monster_Hunter_Wilds"
+      ],
+      "retrieved": [
+        "Monster_Hunter_Wilds",
+        "Monster_Hunter_Wilds",
+        "Monster_Hunter",
+        "Monster_Hunter",
+        "Monster_Hunter: World"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Monster Hunter Wilds sold over eight million copies in its first three days.",
+      "answer_correct": true
+    },
+    {
+      "id": "now-developer",
+      "category": "wiki_fact",
+      "question": "Who developed Monster Hunter Now?",
+      "expected_sources": [
+        "Monster_Hunter_Now"
+      ],
+      "retrieved": [
+        "Monster_Hunter_Now",
+        "Monster_Hunter_Now",
+        "Monster_Hunter",
+        "Monster_Hunter_Outlanders",
+        "Monster_Hunter_Outlanders"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Monster Hunter Now was developed by Niantic and Capcom.",
+      "answer_correct": true
+    },
+    {
+      "id": "outlanders-developer",
+      "category": "wiki_fact",
+      "question": "Which studio is developing Monster Hunter Outlanders?",
+      "expected_sources": [
+        "Monster_Hunter_Outlanders"
+      ],
+      "retrieved": [
+        "Monster_Hunter_Outlanders",
+        "Monster_Hunter_Outlanders",
+        "Monster_Hunter",
+        "Monster_Hunter_(video_game)",
+        "Monster_Hunter_Outlanders"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "TiMi Studio Group",
+      "answer_correct": true
+    },
+    {
+      "id": "wilds-release",
+      "category": "wiki_fact",
+      "question": "When was Monster Hunter Wilds released?",
+      "expected_sources": [
+        "Monster_Hunter_Wilds"
+      ],
+      "retrieved": [
+        "Monster_Hunter_Wilds",
+        "Monster_Hunter_Wilds",
+        "Monster_Hunter_(video_game)",
+        "Monster_Hunter",
+        "Monster_Hunter_Wilds"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Monster Hunter Wilds was released on February 28, 2025.",
+      "answer_correct": true
+    },
+    {
+      "id": "tri-planned-platform",
+      "category": "wiki_fact",
+      "question": "What console was Monster Hunter Tri originally planned for?",
+      "expected_sources": [
+        "Monster_Hunter_Tri"
+      ],
+      "retrieved": [
+        "Monster_Hunter_Tri",
+        "Monster_Hunter_(video_game)",
+        "Monster_Hunter_Tri",
+        "PlayStation_Vita",
+        "Monster_Hunter_Tri"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Monster Hunter Tri was originally planned for the PlayStation 3.",
+      "answer_correct": true
+    },
+    {
+      "id": "stories-codeveloper",
+      "category": "wiki_fact",
+      "question": "Which company co-developed Monster Hunter Stories with Capcom?",
+      "expected_sources": [
+        "Monster_Hunter_Stories",
+        "Monster_Hunter_Stories_2: Wings_of_Ruin"
+      ],
+      "retrieved": [
+        "Monster_Hunter_Stories",
+        "Monster_Hunter_Stories_2: Wings_of_Ruin",
+        "Monster_Hunter_Outlanders",
+        "Monster_Hunter_Stories",
+        "Monster_Hunter_Stories_3: Twisted_Reflection"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Marvelous",
+      "answer_correct": true
+    },
+    {
+      "id": "switch-release",
+      "category": "wiki_fact",
+      "question": "When was the Nintendo Switch released?",
+      "expected_sources": [
+        "Nintendo_Switch"
+      ],
+      "retrieved": [
+        "Nintendo_Switch",
+        "Nintendo_Switch",
+        "Nintendo_3DS",
+        "Nintendo_Switch",
+        "Nintendo_Switch"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "The Nintendo Switch was released worldwide in most regions on March 3, 2017.",
+      "answer_correct": true
+    },
+    {
+      "id": "psp-sales",
+      "category": "wiki_fact",
+      "question": "How many units did the PlayStation Portable sell?",
+      "expected_sources": [
+        "PlayStation_Portable"
+      ],
+      "retrieved": [
+        "PlayStation_Portable",
+        "PlayStation_Portable",
+        "PlayStation_Portable",
+        "PlayStation_Portable",
+        "PlayStation_Vita"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "The PlayStation Portable sold around 80 million units during its lifetime.",
+      "answer_correct": true
+    },
+    {
+      "id": "rise-sales",
+      "category": "wiki_fact",
+      "question": "How many copies has Monster Hunter Rise sold?",
+      "expected_sources": [
+        "Monster_Hunter_Rise"
+      ],
+      "retrieved": [
+        "Monster_Hunter_Rise",
+        "Monster_Hunter_Rise",
+        "Monster_Hunter_Rise",
+        "Monster_Hunter",
+        "Monster_Hunter"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Monster Hunter Rise has sold more than 20 million copies worldwide.",
+      "answer_correct": true
+    },
+    {
+      "id": "diary-developer",
+      "category": "wiki_fact",
+      "question": "Which company developed Monster Hunter Diary: Poka Poka Airou Village?",
+      "expected_sources": [
+        "Monster_Hunter_Diary"
+      ],
+      "retrieved": [
+        "Monster_Hunter_Diary",
+        "Monster_Hunter",
+        "Monster_Hunter_Diary",
+        "Rathalos",
+        "Monster_Hunter"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "FromSoftware developed Monster Hunter Diary: Poka Poka Airou Village.",
+      "answer_correct": true
+    },
+    {
+      "id": "legends-premiere",
+      "category": "wiki_fact",
+      "question": "Where did Monster Hunter: Legends of the Guild premiere?",
+      "expected_sources": [
+        "Monster_Hunter: Legends_of_the_Guild"
+      ],
+      "retrieved": [
+        "Monster_Hunter: Legends_of_the_Guild",
+        "Monster_Hunter",
+        "Monster_Hunter: Legends_of_the_Guild",
+        "Monster_Hunter",
+        "Monster_Hunter_Stories"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "Monster Hunter: Legends of the Guild premiered on Netflix.",
+      "answer_correct": true
+    },
+    {
+      "id": "iceborne-region",
+      "category": "wiki_fact",
+      "question": "In which new region is the Iceborne expansion set?",
+      "expected_sources": [
+        "Monster_Hunter: World",
+        "Monster_Hunter_World: Iceborne"
+      ],
+      "retrieved": [
+        "Monster_Hunter_World: Iceborne",
+        "Monster_Hunter_World: Iceborne",
+        "Beotodus",
+        "Monster_Hunter_World: Iceborne",
+        "Monster_Hunter_World: Iceborne"
+      ],
+      "base_rank": 1,
+      "reranked_rank": 1,
+      "answer": "The Iceborne expansion is set in Hoarfrost Reach.",
+      "answer_correct": true
+    },
+    {
+      "id": "oos-capital",
+      "category": "out_of_scope",
+      "question": "What is the capital of Australia?",
+      "expected_sources": [],
+      "retrieved": [
+        "Monster_Hunter_4",
+        "Akantor",
+        "Velkhana",
+        "Legiana",
+        "Guardian Arkveld"
+      ],
+      "answer": "I don't know.",
+      "answer_correct": true
+    },
+    {
+      "id": "oos-film-director",
+      "category": "out_of_scope",
+      "question": "Who directed the film Jurassic Park?",
+      "expected_sources": [],
+      "retrieved": [
+        "Monster_Hunter",
+        "Monster_Hunter",
+        "PlayStation_(console)",
+        "Monster_Hunter: World",
+        "PlayStation_(console)"
+      ],
+      "answer": "I don't know.",
+      "answer_correct": true
+    },
+    {
+      "id": "oos-rugby",
+      "category": "out_of_scope",
+      "question": "How many players are on a rugby union team?",
+      "expected_sources": [],
+      "retrieved": [
+        "Monster_Hunter: World",
+        "Safi'jiiva",
+        "Gogmazios",
+        "Monster_Hunter: World",
+        "Monster_Hunter: World"
+      ],
+      "answer": "I don't know.",
+      "answer_correct": true
+    },
+    {
+      "id": "oos-elden-ring",
+      "category": "out_of_scope",
+      "question": "How many copies has Elden Ring sold?",
+      "expected_sources": [],
+      "retrieved": [
+        "List_of_best-selling_video_games",
+        "Monster_Hunter: World",
+        "Monster_Hunter: World",
+        "Monster_Hunter_Rise",
+        "Nintendo_Switch"
+      ],
+      "answer": "I don't know.",
+      "answer_correct": true
+    }
+  ]
+}

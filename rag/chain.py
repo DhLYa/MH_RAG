@@ -29,18 +29,21 @@ def build_prompt() -> ChatPromptTemplate:
     Question: {question}
     """)
 
-def build_chain(retriever) -> Runnable:
-    answer = (
+def build_answer_chain() -> Runnable:
+    """Answers from documents already retrieved: {"docs": [...], "question": str} -> str."""
+    return (
         {"context": lambda x: format_docs(x["docs"]), "question": lambda x: x["question"]}
         | build_prompt()
         | get_llm()
         | StrOutputParser()
     )
+
+def build_chain(retriever) -> Runnable:
     return RunnableParallel(
         docs=retriever,
-        question=RunnablePassthrough(), 
+        question=RunnablePassthrough(),
     ) | RunnableParallel(
-        answer=answer,
+        answer=build_answer_chain(),
         docs=lambda x: x["docs"],
     )
 

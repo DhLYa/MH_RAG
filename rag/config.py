@@ -8,6 +8,7 @@ PAGES_FILES = [
     Path("documents/mh_wiki_monsters.json"),
 ]
 CHROMA_DIR = Path("chroma_db")
+EVAL_QUESTIONS_FILE = Path("evaluation/questions.json")
 CHUNK_CACHE_DIR = ""
 
 EMBEDDING_MODEL = "voyage-4-large"
