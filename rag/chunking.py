@@ -2,7 +2,8 @@ import re
 
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from .config import CHUNK_SIZE, CHUNK_OVERLAP, MIN_CHUNK_CHARS
+
+from .config import CHUNK_OVERLAP, CHUNK_SIZE, MIN_CHUNK_CHARS
 
 HEADING_MAX_CHARS = 40
 # Sentence endings, plus ":" so infobox lines such as "Weakest To: Thunder" count as content

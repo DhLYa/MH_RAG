@@ -3,7 +3,7 @@ import re
 from langchain_core.documents import Document
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable, RunnablePassthrough, RunnableParallel
+from langchain_core.runnables import Runnable, RunnableParallel, RunnablePassthrough
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from .config import LLM_MODEL
