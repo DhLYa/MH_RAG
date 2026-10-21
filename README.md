@@ -6,8 +6,8 @@ Questions are answered only from the retrieved source material. Each statement c
 passage it came from, only the cited sources are listed, and the system says "I don't know" rather
 than falling back on the language model's own knowledge.
 
-Built with LangChain, Voyage AI embeddings and reranking, Chroma as a persistent vector
-store, and Gemini 3.5 Flash-Lite for free generation with a high rate limit.
+Built with LangChain, Voyage AI embeddings and reranking, BM25 keyword search, Chroma as a
+persistent vector store, and Gemini 3.5 Flash-Lite for free generation with a high rate limit.
 
 ## Example
 
@@ -30,8 +30,8 @@ Wikipedia API + Monster Hunter Wiki API
     -> ingest       One document per article from JSON files
     -> chunking     recursive character split at section, paragraph and sentence ends; heading-only chunks dropped
     -> vectorstore  Voyage embeddings, Chroma, content-hash deduplication
-    -> retrieval    top-20 by vector similarity
-    -> reranking    Voyage cross-encoder, top-20 -> top-5
+    -> retrieval    top-20 by vector similarity + top-20 by BM25 keywords, fused by reciprocal rank
+    -> reranking    Voyage cross-encoder, up to 40 candidates -> top-5
     -> generation   Gemini, answering only from retrieved context with [n] citations
 ```
 
@@ -116,6 +116,7 @@ each LLM answer for the expected terms, or for a refusal on out-of-scope questio
 ```bash
 python -m rag.evaluate
 python -m rag.evaluate --generate --output evaluation/results/baseline.json
+python -m rag.evaluate --retrieval vector     # compare against vector search alone
 ```
 
 Tests and lint. The tests use fakes in place of the APIs, so they need no keys:
@@ -199,10 +200,17 @@ prefer section and paragraph boundaries before falling back to more arbitrary cu
 logic, so the serving layer imports it without triggering corpus loading. The chain is
 built once at application startup rather than per request.
 
-**Reranking over a larger candidate set.** The base retriever returns the 20 closest chunks by cosine similarity.
-This is specifically so the reranker has enough candidates to work with. Reranking improves
-precision within a candidate set but cannot recover a relevant chunk that the initial
-retrieval missed entirely.
+**Reranking over a larger candidate set.** Retrieval returns up to 40 candidates so the
+reranker has enough to work with. Reranking improves precision within a candidate set but
+cannot recover a relevant chunk that the initial retrieval missed entirely.
+
+**Hybrid retrieval.** Embeddings place a question near passages with similar meaning, which
+fails for rare exact terms: asked which monster is called "Arushuberudo" in Japanese, vector
+search ranked the Arkveld page 7th and the reranker dropped it. BM25 keyword search over the
+same chunks finds such terms directly, and the two ranked lists are merged by reciprocal rank
+fusion before reranking. On the evaluation set this raised reranked hit@1 from 0.96 to 0.98
+and keyword questions from 0.80 to 1.00, with no category getting worse. The BM25 index is
+built in memory from the stored chunks at startup. `HYBRID_SEARCH` in `config.py` turns it off.
 
 ## Limitations and next steps
 

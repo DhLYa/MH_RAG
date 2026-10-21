@@ -77,12 +77,13 @@ def test_is_refusal():
 # evaluate_question / summarise
 # --------------------------------------------------------------------------
 
-class FakeStore:
+class FakeRetriever:
+    """Candidate retriever returning one chunk per source, in order."""
     def __init__(self, sources):
         self.sources = sources
 
-    def similarity_search(self, query, k):
-        return [doc(s) for s in self.sources[:k]]
+    def invoke(self, query):
+        return [doc(s) for s in self.sources]
 
 
 class FakeReranker:
@@ -102,7 +103,7 @@ class FakeAnswerChain:
 def test_evaluate_question_scores_both_stages():
     question = {"id": "q", "category": "mh_fact", "question": "?", "sources": ["Rathalos"],
                 "answer_contains": ["Dragon"]}
-    store = FakeStore(["Tigrex", "Rathalos", "Rathian"])
+    store = FakeRetriever(["Tigrex", "Rathalos", "Rathian"])
     result = evaluate_question(question, store, FakeReranker(), FakeAnswerChain("Dragon [2]."))
     assert result["base_rank"] == 2
     assert result["reranked_rank"] == 2
@@ -115,7 +116,7 @@ def test_evaluate_question_scores_both_stages():
 def test_citing_only_the_wrong_page_is_a_citation_miss():
     question = {"id": "q", "category": "mh_fact", "question": "?", "sources": ["Rathalos"],
                 "answer_contains": ["Dragon"]}
-    store = FakeStore(["Tigrex", "Rathalos", "Rathian"])
+    store = FakeRetriever(["Tigrex", "Rathalos", "Rathian"])
     result = evaluate_question(question, store, FakeReranker(), FakeAnswerChain("Dragon [1]."))
     assert result["cited_sources"] == ["Rathian"]
     assert result["answer_correct"] is True
@@ -124,7 +125,7 @@ def test_citing_only_the_wrong_page_is_a_citation_miss():
 
 def test_out_of_scope_question_is_scored_on_refusal_only():
     question = {"id": "q", "category": "out_of_scope", "question": "?", "sources": [], "answer_contains": []}
-    result = evaluate_question(question, FakeStore(["Tigrex"]), FakeReranker(), FakeAnswerChain("I don't know."))
+    result = evaluate_question(question, FakeRetriever(["Tigrex"]), FakeReranker(), FakeAnswerChain("I don't know."))
     assert "base_rank" not in result
     assert result["answer_correct"] is True
     assert result["citation_correct"] is True
@@ -133,7 +134,7 @@ def test_out_of_scope_question_is_scored_on_refusal_only():
 def test_out_of_scope_answer_citing_a_block_is_a_citation_miss():
     question = {"id": "q", "category": "out_of_scope", "question": "?", "sources": [], "answer_contains": []}
     answer = FakeAnswerChain("I don't know, but see [1].")
-    result = evaluate_question(question, FakeStore(["Tigrex"]), FakeReranker(), answer)
+    result = evaluate_question(question, FakeRetriever(["Tigrex"]), FakeReranker(), answer)
     assert result["citation_correct"] is False
 
 
@@ -143,7 +144,7 @@ def test_failed_llm_call_is_recorded_not_scored():
             raise RuntimeError("429 rate limited")
 
     question = {"id": "q", "category": "mh_fact", "question": "?", "sources": ["Rathalos"], "answer_contains": []}
-    result = evaluate_question(question, FakeStore(["Rathalos"]), FakeReranker(), FailingChain())
+    result = evaluate_question(question, FakeRetriever(["Rathalos"]), FakeReranker(), FailingChain())
     assert "answer_correct" not in result
     assert "429" in result["answer_error"]
 

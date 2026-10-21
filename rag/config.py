@@ -19,4 +19,6 @@ CHUNK_OVERLAP = 120
 MIN_CHUNK_CHARS = 10    # floor for stray fragments; headings are filtered by shape, not length
 
 RETRIEVAL_K = 20
+HYBRID_SEARCH = True    # fuse BM25 keyword results with vector results before reranking
+BM25_K = 20
 RERANK_K = 5

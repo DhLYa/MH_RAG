@@ -6,9 +6,9 @@ from pydantic import BaseModel
 
 from .chain import build_chain, cited_indices
 from .vectorstore import (
+    get_candidate_retriever,
     get_compression_retriever,
     get_reranker,
-    get_retriever,
     get_vector_store,
     is_empty,
 )
@@ -21,9 +21,8 @@ def build_rag_chain():
         raise RuntimeError(
             "Vector store is empty. Run `python -m rag.pipeline` once to ingest the corpus."
         )
-    retriever = get_retriever(store)
     reranker = get_reranker()
-    return build_chain(get_compression_retriever(reranker, retriever))
+    return build_chain(get_compression_retriever(reranker, get_candidate_retriever(store)))
 
 
 @asynccontextmanager

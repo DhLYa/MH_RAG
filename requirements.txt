@@ -1,6 +1,7 @@
 langchain
 langchain-classic
 langchain-chroma
+langchain-community
 langchain-core
 langchain-google-genai
 langchain-text-splitters
@@ -9,6 +10,7 @@ chromadb
 fastapi
 uvicorn
 python-dotenv
+rank-bm25
 requests
 beautifulsoup4
 tqdm
