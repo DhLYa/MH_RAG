@@ -17,9 +17,12 @@ class FakeChain:
 
 @pytest.fixture
 def client_with(monkeypatch):
-    """A TestClient whose startup builds the given fake chain instead of the real one."""
-    def make(chain):
-        monkeypatch.setattr(api, "build_rag_chain", lambda: chain)
+    """A TestClient whose startup builds fake chains instead of the real ones. Given one chain,
+    it serves every corpus filter; given a dict, each corpus key gets its own."""
+    def make(chains):
+        if not isinstance(chains, dict):
+            chains = {None: chains, "wikipedia_pages": chains, "mh_wiki_monsters": chains}
+        monkeypatch.setattr(api, "build_rag_chains", lambda: chains)
         return TestClient(api.app)
     return make
 
@@ -56,6 +59,22 @@ def test_query_returns_answer_and_numbered_sources(client_with):
 def test_query_with_no_sources(client_with):
     with client_with(FakeChain([])) as client:
         assert client.post("/query", json={"question": "?"}).json()["sources"] == []
+
+
+def test_query_routes_to_the_requested_corpus(client_with):
+    chains = {None: FakeChain([]), "wikipedia_pages": FakeChain([]), "mh_wiki_monsters": FakeChain([])}
+    with client_with(chains) as client:
+        client.post("/query", json={"question": "Who developed Monster Hunter Now?", "corpus": "wikipedia_pages"})
+        client.post("/query", json={"question": "What is Rathalos weak to?"})
+
+    assert chains["wikipedia_pages"].questions == ["Who developed Monster Hunter Now?"]
+    assert chains[None].questions == ["What is Rathalos weak to?"]
+    assert chains["mh_wiki_monsters"].questions == []
+
+
+def test_query_rejects_an_unknown_corpus(client_with):
+    with client_with(FakeChain([])) as client:
+        assert client.post("/query", json={"question": "?", "corpus": "fandom"}).status_code == 422
 
 
 def test_query_rejects_a_missing_question(client_with):

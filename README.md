@@ -109,6 +109,21 @@ language model:
 python -m rag.pipeline --retrieval-only
 ```
 
+Search one corpus only, `wikipedia_pages` (series and sales history) or `mh_wiki_monsters`
+(in-game monster data). Combines with `--retrieval-only`:
+
+```bash
+python -m rag.pipeline --corpus mh_wiki_monsters
+```
+
+API, with the interactive docs at `http://localhost:8000/docs`. `corpus` is optional:
+
+```bash
+uvicorn rag.api:app
+curl -X POST localhost:8000/query -H "Content-Type: application/json" \
+     -d '{"question": "What is Rathalos weak to?", "corpus": "mh_wiki_monsters"}'
+```
+
 Evaluation against the labelled questions in `evaluation/questions.json`. Retrieval is scored
 by hit rate and MRR before and after reranking, using only Voyage calls; `--generate` also checks
 each LLM answer for the expected terms, or for a refusal on out-of-scope questions:
