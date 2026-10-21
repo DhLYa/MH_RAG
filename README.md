@@ -82,6 +82,15 @@ language model:
 python -m rag.pipeline --retrieval-only
 ```
 
+Evaluation against the labelled questions in `evaluation/questions.json`. Retrieval is scored
+by hit rate and MRR before and after reranking, using only Voyage calls; `--generate` also checks
+each LLM answer for the expected terms, or for a refusal on out-of-scope questions:
+
+```bash
+python -m rag.evaluate
+python -m rag.evaluate --generate --output evaluation/results/baseline.json
+```
+
 Pytest: runs all tests in tests folder
 
 ```bash
@@ -99,7 +108,9 @@ rag/
     chain.py        prompt, language model, and the LCEL retrieval chain
     pipeline.py     orchestration and command-line entry point
     api.py          FastAPI serving layer
+    evaluate.py     retrieval and answer scoring on the labelled questions
 documents/          the corpus as JSON files
+evaluation/         labelled questions with expected source pages and answer terms
 notebooks/
     build_corpus.ipynb  fetches both sources and writes the corpus JSON files
     archive/            earlier exploration notebooks, kept for reference
@@ -108,7 +119,7 @@ tests/              unit tests for the pure-logic components
 
 ## Data
 
-The corpus is composed from two sources totalling 502 documents, and is rebuilt
+The corpus is composed from two sources totalling 505 documents, and is rebuilt
 from source by running `notebooks/build_corpus.ipynb`. Monster Hunter Wiki pages
 are selected by category; the Wikipedia articles are a fixed list of titles in
 the notebook, since the consoles and sales list sit outside the series category.
@@ -117,7 +128,7 @@ The first is 33 English Wikipedia articles covering the Monster Hunter series,
 its individual titles and spin-offs, the consoles they released on, and a list
 of best-selling video games. This provides meta-information about the series.
 
-The second is 469 pages from monsterhunterwiki.org, providing in-game content.
+The second is 472 pages from monsterhunterwiki.org, providing in-game content.
 The two sources answer different question types, and chunks record which corpus
 they came from so retrieval results can be attributed and filtered.
 
@@ -166,11 +177,13 @@ retrieval missed entirely.
 
 ## Limitations and next steps
 
-**No systematic evaluation yet.** The most useful addition would be a labelled set of
-questions paired with expected answers, evaluated with the RAGAS framework to give
-separate metrics for retrieval and generation quality. The main blocker is cost: RAGAS
-uses an LLM as judge, and the number of calls required sits above Gemini's free-tier
-rate limit. Implementing this would be also be time-intensive.
+**Evaluation is keyword-based and the question set is small.** `rag.evaluate` scores
+retrieval against labelled source pages and checks answers for expected terms, which avoids
+an LLM judge and stays within free tiers. Term matching cannot judge paraphrased or partially
+correct answers; an LLM-as-judge framework such as RAGAS would, at the cost of more calls
+than Gemini's free tier allows. Most questions name their subject, so retrieval scores are
+near ceiling; harder questions (comparisons, facts spread across pages, variants such as
+Rathalos and Azure Rathalos) would separate configurations better.
 
 **No caching layer.** Caching both common queries and their generated answers would avoid
 repeat API calls, reducing latency and token consumption.
