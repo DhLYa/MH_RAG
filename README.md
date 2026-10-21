@@ -231,9 +231,12 @@ what supports it rather than everything that was retrieved; the API returns all 
 `cited` flag. Evaluation scores citations separately from answers, since a correct answer can
 cite the wrong page.
 
-**Deterministic answers.** Gemini runs at temperature 0, so the same question with the same
-passages gives the same answer. Without it, two evaluation runs of identical code could disagree,
-and with 60 questions a single changed answer moves accuracy by almost two points.
+**Model choice and temperature.** Gemini 3.5 Flash-Lite is used for its speed and its larger
+free allowance; Gemini 3.8 Flash, the newest free model, allows only 20 requests a day, fewer than
+one evaluation run needs. Flash-Lite uses fixed sampling and ignores the temperature setting, so
+the same question can get slightly different answers between runs, and small differences between
+evaluation runs are noise. `LLM_TEMPERATURE = 0` stays in `config.py` for models that honour it,
+such as Gemini 3.5 Flash, where it would make evaluation runs repeatable.
 
 **Retrieval and serving are separated.** `chain.py` contains no ingestion or storage
 logic, so the serving layer imports it without triggering corpus loading. The chain is
