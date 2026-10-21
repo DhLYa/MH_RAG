@@ -1,6 +1,5 @@
-from collections import defaultdict
-from pathlib import Path
 import json
+from pathlib import Path
 
 from langchain_core.documents import Document
 from .config import PAGES_FILES

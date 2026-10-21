@@ -1,11 +1,21 @@
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.documents import Document
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable, RunnablePassthrough, RunnableParallel
 from langchain_google_genai import ChatGoogleGenerativeAI
- 
+
 from .config import LLM_MODEL
+
+# Kept flush-left: indentation inside the string would be sent to the model on every line
+PROMPT_TEMPLATE = """\
+Use the following pieces of context to answer the question at the end.
+If you don't know the answer, say that you don't know.
+Reformat the answer as appropriate and do not use Markdown formatting.
+Answer only the question asked, add extra information only if highly relevant.
+Answers should be strictly gameplay related unless asked otherwise.
+Context: {context}
+Question: {question}
+"""
 
 def get_llm():
     llm = ChatGoogleGenerativeAI(model=LLM_MODEL)
@@ -19,15 +29,7 @@ def format_docs(docs: list[Document]) -> str:
     return "\n\n".join(doc_blocks)
 
 def build_prompt() -> ChatPromptTemplate:
-    return ChatPromptTemplate.from_template("""
-    Use the following pieces of context to answer the question at the end.
-    If you don't know the answer, say that you don't know.
-    Reformat the answer as appropriate and do not use Markdown formatting.
-    Answer only the question asked, add extra information only if highly relevant.
-    Answers should be strictly gameplay related unless asked otherwise. 
-    Context: {context}
-    Question: {question}
-    """)
+    return ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
 
 def build_answer_chain() -> Runnable:
     """Answers from documents already retrieved: {"docs": [...], "question": str} -> str."""

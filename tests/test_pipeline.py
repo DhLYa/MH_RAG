@@ -95,8 +95,7 @@ def test_distinct_prose_yields_distinct_ids():
 
 @pytest.fixture
 def corpus_files(tmp_path):
-    """Two small corpus files in the same title -> text shape as the real ones."""
-    """Two small corpus files for testing in the same format as Wikipedia and MonsterHunterWiki"""
+    """Two small corpus files in the same title -> text format as the Wikipedia and Monster Hunter Wiki ones."""
     wiki = tmp_path / "wikipedia_pages.json"
     wiki.write_text(
         json.dumps({"Monster Hunter": "Monster Hunter is a game series. " * 8}),

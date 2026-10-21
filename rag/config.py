@@ -9,7 +9,6 @@ PAGES_FILES = [
 ]
 CHROMA_DIR = Path("chroma_db")
 EVAL_QUESTIONS_FILE = Path("evaluation/questions.json")
-CHUNK_CACHE_DIR = ""
 
 EMBEDDING_MODEL = "voyage-4-large"
 RERANKER_MODEL = "rerank-2.5"
