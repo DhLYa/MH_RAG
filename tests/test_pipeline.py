@@ -3,7 +3,7 @@ import json
 import pytest
 from langchain_core.documents import Document
 
-from rag.chain import ask, build_prompt, format_docs
+from rag.chain import ask, build_prompt, cited_indices, format_docs
 from rag.chunking import chunk_documents
 from rag.config import MIN_CHUNK_CHARS
 from rag.ingest import load_documents
@@ -144,6 +144,14 @@ def test_format_docs_labels_each_block_with_its_source():
     assert "Source: Rathalos" in out
  
  
+def test_format_docs_names_the_source_once_per_block():
+    """Chunks carry a "Source: <title>" prefix for retrieval; the context shouldn't repeat it."""
+    chunk = chunk_documents([make_doc("Rathalos is a Flying Wyvern. " * 10, source="Rathalos")])[0]
+    out = format_docs([chunk])
+    assert out.startswith("[1] Source: Rathalos\nRathalos is a Flying Wyvern.")
+    assert out.count("Source: Rathalos") == 1
+
+
 def test_format_docs_separates_blocks_with_a_blank_line():
     """Verify format when printing sources is correct"""
     out = format_docs([make_doc("first"), make_doc("second")])
@@ -227,11 +235,12 @@ def test_is_empty():
 # --------------------------------------------------------------------------
 
 class FakeChain:
-    def __init__(self, docs):
+    def __init__(self, docs, answer="I don't know."):
         self.docs = docs
+        self.answer = answer
 
     def invoke(self, question):
-        return {"answer": "I don't know.", "docs": self.docs}
+        return {"answer": self.answer, "docs": self.docs}
 
 
 def test_ask_handles_no_retrieved_docs():
@@ -250,3 +259,35 @@ def test_ask_formats_relevance_score():
     doc = make_doc("text", source="Rathalos")
     doc.metadata["relevance_score"] = 0.80859
     assert "relevance=0.8086 - mh_wiki_monsters" in ask(FakeChain([doc]), "anything")
+
+
+def test_ask_lists_only_cited_sources_under_their_own_numbers():
+    docs = [make_doc("a", source="Tigrex"), make_doc("b", source="Rathalos"), make_doc("c", source="Rathian")]
+    out = ask(FakeChain(docs, answer="Rathalos is weak to Dragon [2]."), "anything")
+    assert "\nSources:" in out
+    assert "[2] Rathalos" in out
+    assert "Tigrex" not in out and "Rathian" not in out
+
+
+def test_ask_falls_back_to_all_retrieved_when_nothing_is_cited():
+    """Without citations, still show what the answer was based on, labelled as such."""
+    docs = [make_doc("a", source="Tigrex"), make_doc("b", source="Rathalos")]
+    out = ask(FakeChain(docs, answer="I don't know."), "anything")
+    assert "Retrieved (none cited):" in out
+    assert "[1] Tigrex" in out and "[2] Rathalos" in out
+
+# --------------------------------------------------------------------------
+# cited_indices
+# --------------------------------------------------------------------------
+
+def test_cited_indices_reads_all_citation_styles_in_order():
+    assert cited_indices("Fire [3]. Water [1][2]. Ice [2, 4].", n_docs=5) == [3, 1, 2, 4]
+
+
+def test_cited_indices_ignores_numbers_outside_the_blocks_given():
+    """[0] or [9] cannot refer to a context block when only 5 were given."""
+    assert cited_indices("See [0], [9] and [5].", n_docs=5) == [5]
+
+
+def test_cited_indices_none():
+    assert cited_indices("I don't know.", n_docs=5) == []
