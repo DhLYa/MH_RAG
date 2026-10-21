@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 630" width="960" height="630" role="img" aria-label="Query-time retrieval: the question is embedded for vector search and tokenised for BM25 keyword search over the same Chroma chunks; the two top-20 lists are merged by reciprocal rank fusion into at most 40 candidates; the reranker keeps the top 5, which are numbered in the prompt; Gemini answers citing block numbers; the CLI lists cited sources and the API flags each source as cited.">
+<style>
+  text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+  .box { fill: #151b23; stroke: #3d444d; stroke-width: 1.25; }
+  .strong { fill: #151b23; stroke: #e6edf3; stroke-width: 1.5; }
+  .vec { fill: #15263a; stroke: #7db2ec; stroke-width: 1.25; }
+  .kw { fill: #33240f; stroke: #eba457; stroke-width: 1.5; }
+  .store { fill: #1c232c; stroke: #3d444d; stroke-width: 1.25; }
+  .t { fill: #e6edf3; font-size: 13.5px; font-weight: 600; }
+  .s { fill: #9198a1; font-size: 12px; }
+  .m { fill: #9198a1; font-size: 11.5px; font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; }
+  .lab { fill: #9198a1; font-size: 11.5px; }
+  .e { fill: none; stroke: #9198a1; stroke-width: 1.5; }
+  .ev { fill: none; stroke: #7db2ec; stroke-width: 1.75; }
+  .ek { fill: none; stroke: #eba457; stroke-width: 1.75; }
+  .dash { stroke-dasharray: 5 4; }
+</style>
+<defs>
+  <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#9198a1"/></marker>
+  <marker id="av" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#7db2ec"/></marker>
+  <marker id="ak" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#eba457"/></marker>
+</defs>
+
+<!-- Question -->
+<rect class="strong" x="16" y="180" width="150" height="80" rx="6"/>
+<text class="t" x="91" y="214" text-anchor="middle">Question</text>
+<text class="s" x="91" y="236" text-anchor="middle">optional corpus filter</text>
+
+<!-- Vector branch -->
+<path class="ev" d="M166 208 H192 V88 H218" marker-end="url(#av)"/>
+<rect class="vec" x="220" y="60" width="180" height="56" rx="6"/>
+<text class="t" x="310" y="84" text-anchor="middle">Embed question</text>
+<text class="m" x="310" y="103" text-anchor="middle">voyage-4-large</text>
+<path class="ev" d="M400 88 H448" marker-end="url(#av)"/>
+<text class="lab" x="424" y="80" text-anchor="middle">vector</text>
+<rect class="vec" x="450" y="60" width="200" height="56" rx="6"/>
+<text class="t" x="550" y="84" text-anchor="middle">Vector search</text>
+<text class="s" x="550" y="103" text-anchor="middle">cosine · top 20</text>
+
+<!-- Shared store -->
+<rect class="store" x="450" y="194" width="200" height="52" rx="6"/>
+<text class="t" x="550" y="216" text-anchor="middle">Chroma store</text>
+<text class="s" x="550" y="234" text-anchor="middle">5,761 chunks + vectors</text>
+<path class="e" d="M550 194 V120" marker-end="url(#a)"/>
+<text class="lab" x="560" y="162">stored vectors</text>
+<path class="e dash" d="M550 246 V320" marker-end="url(#a)"/>
+<text class="lab" x="560" y="278">chunk text,</text>
+<text class="lab" x="560" y="293">indexed at startup</text>
+
+<!-- Keyword branch -->
+<path class="ek" d="M166 232 H192 V352 H218" marker-end="url(#ak)"/>
+<rect class="kw" x="220" y="324" width="180" height="56" rx="6"/>
+<text class="t" x="310" y="348" text-anchor="middle">Tokenise</text>
+<text class="s" x="310" y="367" text-anchor="middle">lower-case words</text>
+<path class="ek" d="M400 352 H448" marker-end="url(#ak)"/>
+<text class="lab" x="424" y="344" text-anchor="middle">terms</text>
+<rect class="kw" x="450" y="324" width="200" height="56" rx="6"/>
+<text class="t" x="550" y="348" text-anchor="middle">BM25 search</text>
+<text class="s" x="550" y="367" text-anchor="middle">in memory · top 20</text>
+
+<!-- Fusion -->
+<path class="ev" d="M650 88 H700 V204 H738" marker-end="url(#av)"/>
+<text class="lab" x="708" y="148">ranked 1–20</text>
+<path class="ek" d="M650 352 H700 V236 H738" marker-end="url(#ak)"/>
+<text class="lab" x="708" y="302">ranked 1–20</text>
+<rect class="strong" x="740" y="164" width="204" height="112" rx="6"/>
+<text class="t" x="842" y="192" text-anchor="middle">Reciprocal rank fusion</text>
+<text class="m" x="842" y="214" text-anchor="middle">0.5 ÷ (60 + rank)</text>
+<text class="s" x="842" y="233" text-anchor="middle">per list; a chunk found</text>
+<text class="s" x="842" y="250" text-anchor="middle">by both adds both scores</text>
+
+<!-- Down into the answering row, which reads right to left -->
+<path class="e" d="M842 276 V432" marker-end="url(#a)"/>
+<text class="lab" x="852" y="400">≤ 40 candidates</text>
+
+<rect class="strong" x="794" y="434" width="150" height="72" rx="6"/>
+<text class="t" x="869" y="458" text-anchor="middle">Rerank</text>
+<text class="m" x="869" y="477" text-anchor="middle">rerank-2.5</text>
+<text class="s" x="869" y="494" text-anchor="middle">question + each chunk</text>
+
+<path class="e" d="M794 470 H744" marker-end="url(#a)"/>
+<text class="lab" x="768" y="462" text-anchor="middle">top 5</text>
+
+<rect class="box" x="592" y="434" width="150" height="72" rx="6"/>
+<text class="t" x="667" y="458" text-anchor="middle">Number blocks</text>
+<text class="m" x="667" y="477" text-anchor="middle">[1] … [5]</text>
+<text class="s" x="667" y="494" text-anchor="middle">source named once</text>
+
+<path class="e" d="M592 470 H542" marker-end="url(#a)"/>
+<text class="lab" x="566" y="462" text-anchor="middle">prompt</text>
+
+<rect class="box" x="390" y="434" width="150" height="72" rx="6"/>
+<text class="t" x="465" y="458" text-anchor="middle">Gemini</text>
+<text class="m" x="465" y="477" text-anchor="middle">3.5 Flash-Lite</text>
+<text class="s" x="465" y="494" text-anchor="middle">cites as [n]</text>
+
+<path class="e" d="M390 470 H340" marker-end="url(#a)"/>
+<text class="lab" x="364" y="462" text-anchor="middle">answer</text>
+
+<rect class="box" x="188" y="434" width="150" height="72" rx="6"/>
+<text class="t" x="263" y="458" text-anchor="middle">Read citations</text>
+<text class="m" x="263" y="477" text-anchor="middle">cited_indices</text>
+<text class="s" x="263" y="494" text-anchor="middle">[n] → block n</text>
+
+<!-- Outputs -->
+<path class="e" d="M263 506 V530 H111 V554" marker-end="url(#a)"/>
+<path class="e" d="M263 530 H415 V554" marker-end="url(#a)"/>
+<rect class="box" x="36" y="556" width="150" height="56" rx="6"/>
+<text class="t" x="111" y="580" text-anchor="middle">CLI</text>
+<text class="s" x="111" y="599" text-anchor="middle">cited sources only</text>
+<rect class="box" x="340" y="556" width="150" height="56" rx="6"/>
+<text class="t" x="415" y="580" text-anchor="middle">API</text>
+<text class="s" x="415" y="599" text-anchor="middle">all 5 + cited flag</text>
+</svg>

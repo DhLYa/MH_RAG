@@ -25,15 +25,14 @@ each marked `cited` true or false.
 
 ## Pipeline
 
-```
-Wikipedia API + Monster Hunter Wiki API
-    -> ingest       One document per article from JSON files
-    -> chunking     recursive character split at section, paragraph and sentence ends; heading-only chunks dropped
-    -> vectorstore  Voyage embeddings, Chroma, content-hash deduplication
-    -> retrieval    top-20 by vector similarity + top-20 by BM25 keywords, fused by reciprocal rank
-    -> reranking    Voyage cross-encoder, up to 40 candidates -> top-5
-    -> generation   Gemini, answering only from retrieved context with [n] citations
-```
+Before any question is asked, ingestion loads one document per article from the corpus JSON
+files, splits it at section, paragraph and sentence ends, drops heading-only chunks, embeds the
+rest with Voyage and stores them in Chroma under content-hash IDs. Each question then takes this path:
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/retrieval-pipeline-dark.svg">
+  <img alt="Query-time retrieval: the question is embedded for vector search and tokenised for BM25 keyword search over the same Chroma chunks; the two top-20 lists are merged by reciprocal rank fusion into at most 40 candidates; the reranker keeps the top 5, which are numbered in the prompt; Gemini answers citing block numbers; the CLI lists cited sources and the API flags each source as cited." src="docs/retrieval-pipeline-light.svg">
+</picture>
 
 ## Problems worth describing
 
@@ -153,6 +152,7 @@ rag/
     pipeline.py     orchestration and command-line entry point
     api.py          FastAPI serving layer
     evaluate.py     retrieval and answer scoring on the labelled questions
+docs/               pipeline diagram, light and dark versions
 documents/          the corpus as JSON files
 evaluation/         labelled questions with expected source pages and answer terms
 notebooks/
