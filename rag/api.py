@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
-from .chain import build_chain
+from .chain import build_chain, cited_indices
 from .vectorstore import (
     get_compression_retriever,
     get_reranker,
@@ -50,6 +50,7 @@ def root():
 @app.post("/query")
 def query(q: Query, request: Request):
     result = request.app.state.chain.invoke(q.question)
+    cited = cited_indices(result["answer"], len(result["docs"]))
     return {
         "answer": result["answer"],
         "sources": [
@@ -58,6 +59,7 @@ def query(q: Query, request: Request):
                 "title": d.metadata.get("source"),
                 "corpus": d.metadata.get("corpus"),
                 "relevance": d.metadata.get("relevance_score"),
+                "cited": i in cited,
             }
             for i, d in enumerate(result["docs"], 1)
         ],

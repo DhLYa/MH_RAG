@@ -22,7 +22,7 @@ from langchain_core.documents import Document
 from tqdm import tqdm
 
 from . import config
-from .chain import build_answer_chain
+from .chain import build_answer_chain, cited_indices
 from .chunking import chunk_documents
 from .ingest import load_documents
 from .vectorstore import chunk_id, get_reranker, get_vector_store, stored_ids
@@ -137,10 +137,15 @@ def evaluate_question(question: dict, store, reranker, answer_chain=None) -> dic
             result["answer_error"] = f"{type(e).__name__}: {e}"[:300]
             return result
         result["answer"] = answer
+        cited = [reranked[i - 1].metadata.get("source") for i in cited_indices(answer, len(reranked))]
+        result["cited_sources"] = cited
         if expected:
             result["answer_correct"] = answer_matches(answer, question["answer_contains"])
+            result["citation_correct"] = bool(expected & set(cited))
         else:
+            # Nothing in the corpus answers it, so nothing should be cited
             result["answer_correct"] = is_refusal(answer)
+            result["citation_correct"] = not cited
     return result
 
 
@@ -162,6 +167,8 @@ def summarise(results: list[dict]) -> dict:
         if answered:
             correct = sum(1 for r in answered if r["answer_correct"])
             entry["answer_accuracy"] = correct / len(answered)
+            cited_correctly = sum(1 for r in answered if r.get("citation_correct"))
+            entry["citation_accuracy"] = cited_correctly / len(answered)
         summary[name] = entry
     return summary
 
@@ -196,10 +203,12 @@ def print_retrieval_report(summary: dict, results: list[dict]) -> None:
 
 
 def print_generation_report(summary: dict, results: list[dict]) -> None:
-    print("\nAnswers: expected terms present, or a refusal for out-of-scope questions\n")
+    print("\nAnswers: expected terms present, or a refusal for out-of-scope questions")
+    print("Citations: an expected page cited, or nothing cited for out-of-scope questions\n")
+    print(f"  {'':16}{'answers':>8}{'citations':>11}")
     for name, entry in summary.items():
         if "answer_accuracy" in entry:
-            print(f"  {name:16}{entry['answer_accuracy']:.2f}")
+            print(f"  {name:16}{entry['answer_accuracy']:>8.2f}{entry['citation_accuracy']:>11.2f}")
 
     errors = [r for r in results if "answer_error" in r]
     if errors:

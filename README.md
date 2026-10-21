@@ -2,8 +2,9 @@
 
 A retrieval-augmented generation pipeline that answers questions about the Monster Hunter
 game series using a corpus built from wikipedia articles, and content from the [Monster Hunter Wiki](https://monsterhunterwiki.org/wiki/Main_Page).
-Questions are answered only from the retrieved source material, so the system cites where each
-answer came from and says "I don't know" rather than falling back on the language model's own knowledge.
+Questions are answered only from the retrieved source material. Each statement cites the numbered
+passage it came from, only the cited sources are listed, and the system says "I don't know" rather
+than falling back on the language model's own knowledge.
 
 Built with LangChain, Voyage AI embeddings and reranking, Chroma as a persistent vector
 store, and Gemini 3.5 Flash-Lite for free generation with a high rate limit.
@@ -13,15 +14,14 @@ store, and Gemini 3.5 Flash-Lite for free generation with a high rate limit.
 ```
 >What 4 monsters share a flagship title?
 
-The four flagship monsters featured in Monster Hunter Generations are Astalos, Gammoth, Mizutsune, and Glavenus.
+The four flagship monsters featured in Monster Hunter Generations (also known as Monster Hunter X) are Astalos, Gammoth, Mizutsune, and Glavenus [1].
 
 Sources:
-  [1] Monster_Hunter_Generations   relevance=0.8086 - wikipedia_pages
-  [2] Rathalos                     relevance=0.6680 - mh_wiki_monsters
-  [3] Gore Magala                  relevance=0.6641 - mh_wiki_monsters
-  [4] Azure Rathalos               relevance=0.5625 - mh_wiki_monsters
-  [5] Brachydios                   relevance=0.5078 - mh_wiki_monsters
+  [1] Monster_Hunter_Generations   relevance=0.7930 - wikipedia_pages
 ```
+
+Five passages were retrieved; only the one the answer cites is listed. The API returns all five,
+each marked `cited` true or false.
 
 ## Pipeline
 
@@ -32,7 +32,7 @@ Wikipedia API + Monster Hunter Wiki API
     -> vectorstore  Voyage embeddings, Chroma, content-hash deduplication
     -> retrieval    top-20 by vector similarity
     -> reranking    Voyage cross-encoder, top-20 -> top-5
-    -> generation   Gemini, answering only from retrieved context
+    -> generation   Gemini, answering only from retrieved context with [n] citations
 ```
 
 ## Problems worth describing

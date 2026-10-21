@@ -12,7 +12,7 @@ class FakeChain:
 
     def invoke(self, question):
         self.questions.append(question)
-        return {"answer": "Rathalos is weak to Dragon.", "docs": self.docs}
+        return {"answer": "Rathalos is weak to Dragon [1].", "docs": self.docs}
 
 
 @pytest.fixture
@@ -30,19 +30,26 @@ def test_health(client_with):
 
 
 def test_query_returns_answer_and_numbered_sources(client_with):
-    doc = Document(
+    cited = Document(
         page_content="text",
         metadata={"source": "Rathalos", "corpus": "mh_wiki_monsters", "relevance_score": 0.81},
     )
-    chain = FakeChain([doc])
+    uncited = Document(
+        page_content="text",
+        metadata={"source": "Rathian", "corpus": "mh_wiki_monsters", "relevance_score": 0.42},
+    )
+    chain = FakeChain([cited, uncited])
     with client_with(chain) as client:
         response = client.post("/query", json={"question": "What is Rathalos weak to?"})
 
     assert response.status_code == 200
     assert chain.questions == ["What is Rathalos weak to?"]
     assert response.json() == {
-        "answer": "Rathalos is weak to Dragon.",
-        "sources": [{"id": 1, "title": "Rathalos", "corpus": "mh_wiki_monsters", "relevance": 0.81}],
+        "answer": "Rathalos is weak to Dragon [1].",
+        "sources": [
+            {"id": 1, "title": "Rathalos", "corpus": "mh_wiki_monsters", "relevance": 0.81, "cited": True},
+            {"id": 2, "title": "Rathian", "corpus": "mh_wiki_monsters", "relevance": 0.42, "cited": False},
+        ],
     }
 
 
