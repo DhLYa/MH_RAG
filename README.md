@@ -38,13 +38,23 @@ Wikipedia API + Monster Hunter Wiki API
 ## Problems worth describing
 
 ### Empty section headings polluted the corpus
-Write-up pending. Summary: bare heading lines became content-free chunks in both
-corpora; fixed at scrape time using HTML tag structure rather than text heuristics
+Headings were written out as lines of their own, so a section with no prose beneath it left a
+bare heading behind. On monsterhunterwiki.org this was common: many sections hold only stat
+tables or galleries, which the scraper strips, leaving runs of consecutive headings. The
+splitter turned these into chunks with nothing to retrieve, in both corpora.
+
+Filtering on the text alone cannot reliably tell a heading from a short sentence, so the fix
+uses the page structure. When scraping the HTML, a heading is held back and written only once
+a prose block follows it; if another heading arrives first, it replaces the held one. The
+minimum chunk length filter remains as a backstop for the Wikipedia plain-text extracts.
 
 ### Duplicate chunk IDs rejected on ingestion
-Write-up pending. Summary: content-hash IDs collide when a page repeats a
-paragraph verbatim; ingestion now deduplicates within the batch as well as
-against the store.
+Chunk IDs are a hash of each chunk's corpus, source page and text, so re-running ingestion
+skips chunks already stored. When a page repeats a passage verbatim, two chunks produce the
+same ID. Both passed the check against the store, since neither was stored yet, and Chroma
+then rejected the entire batch for containing a duplicate ID. Ingestion now also tracks the
+IDs seen within the batch and keeps only the first copy, which loses nothing because the
+text is identical.
 
 ## Setup
 
@@ -53,6 +63,8 @@ conda create -n MH_RAG python=3.11
 conda activate MH_RAG
 pip install -r requirements.txt
 ```
+
+For development, `requirements-dev.txt` adds pytest and ruff, which CI runs on every push.
 
 Create a `.env` in the repository root containing API_KEY variables:
 
@@ -91,10 +103,11 @@ python -m rag.evaluate
 python -m rag.evaluate --generate --output evaluation/results/baseline.json
 ```
 
-Pytest: runs all tests in tests folder
+Tests and lint. The tests use fakes in place of the APIs, so they need no keys:
 
 ```bash
 python -m pytest tests -q
+ruff check rag tests
 ```
 
 ## Repo layout
@@ -114,7 +127,8 @@ evaluation/         labelled questions with expected source pages and answer ter
 notebooks/
     build_corpus.ipynb  fetches both sources and writes the corpus JSON files
     archive/            earlier exploration notebooks, kept for reference
-tests/              unit tests for the pure-logic components
+tests/              unit tests, with fakes standing in for the APIs
+.github/workflows/  CI: ruff and pytest on every push
 ```
 
 ## Data
@@ -200,19 +214,18 @@ MonsterHunterWiki.org APIs was consolidated into `notebooks/build_corpus.ipynb`,
 writes both JSON files and reports what changed against the previous version. The
 exploration notebooks it replaced are kept in `notebooks/archive/`.
 
-**LLM outputs do not yet carry citations.** Chunk metadata includes the source article and the
-reranker's relevance score, but the current chain discards both after formatting the
-context.
+**Sources returned with every answer.** The chain passes the reranked documents through
+alongside the answer, so the CLI and API list each source's title, corpus and relevance
+score rather than discarding them after formatting the context.
 
-**No retrieval-only mode.** A flag to run retrieval without calling the LLM would allow
-inspection of which chunks were returned and their relevance scores, making it possible to
-diagnose retrieval quality without consuming generation quota.
+**Retrieval-only mode.** `--retrieval-only` shows the base and reranked results with their
+scores without calling the LLM, so retrieval quality can be diagnosed without consuming
+generation quota.
 
-**No test coverage.** A `test_pipeline.py` covering each component in isolation would
-verify that loading, chunking, ID generation, and context formatting behave as expected,
-and would catch regressions in the pure-logic parts without requiring API calls.
+**Test coverage and CI.** The tests cover loading, chunking, ID generation, deduplication,
+stale-chunk removal, context formatting, the API's responses and the evaluation scoring, all
+without API calls. GitHub Actions runs them, with ruff, on every push.
 
-**Limited corpus scope.** The current sources cover development and commercial history
-rather than in-game content. Expanding via the monster hunter wiki API would add monsters,
-weapons, and quest information, allowing questions about the games themselves rather than
-just the metadata surrounding them.
+**In-game content.** The original sources covered only development and commercial history.
+Monster pages from monsterhunterwiki.org now allow questions about the games themselves
+rather than just the metadata surrounding them.
