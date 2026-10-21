@@ -11,6 +11,7 @@ from .vectorstore import (
     get_reranker,
     get_retriever,
     get_vector_store,
+    remove_stale_chunks,
     upsert_chunks,
 )
 
@@ -23,6 +24,9 @@ def ingest() -> Chroma:
     print(f"split documents into {len(chunks)} chunks.")
 
     store = get_vector_store()
+    removed = remove_stale_chunks(store, chunks)
+    if removed:
+        print(f"Removed {removed} stale chunks.")
     added = upsert_chunks(store, chunks)
     print(f"Added {added} new chunks." if added else "No new chunks to add.")
 
