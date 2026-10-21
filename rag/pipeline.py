@@ -32,12 +32,15 @@ def ingest() -> Chroma:
 
     return store
 
-def print_retrieval(store, compression_retriever, question):
+def print_retrieval(store, reranker, question):
     """
-    Shows the base and reranked results side by side without invoking unnessary LLM calls
+    Shows the base and reranked results side by side without invoking unnecessary LLM calls.
+    Reranks the candidates already fetched rather than searching again, so the question
+    is embedded once.
     """
     scored = store.similarity_search_with_score(question, k=RETRIEVAL_K)
-    reranked = compression_retriever.invoke(question)
+    candidates = [d for d, _ in scored]
+    reranked = reranker.compress_documents(candidates, question) if candidates else []
 
     print(f"\nBase retriever top {RERANK_K} (distance, lower = closer):")
     for i, (d, distance) in enumerate(scored[:RERANK_K], 1):
@@ -54,13 +57,12 @@ def main(retrieval_only: bool = False):
     store = ingest()
 
     reranker = get_reranker()
-    retriever = get_retriever(store)
-    compression_retriever = get_compression_retriever(reranker, retriever)
 
     if retrieval_only:
         chain = None
         mode = "Retrieval only, no unnecessary LLM calls"
     else:
+        compression_retriever = get_compression_retriever(reranker, get_retriever(store))
         chain = build_chain(compression_retriever)
         mode = "RAG ready"
 
@@ -73,7 +75,7 @@ def main(retrieval_only: bool = False):
         if not question:
             break
         if retrieval_only:
-            print_retrieval(store, compression_retriever, question)
+            print_retrieval(store, reranker, question)
         else:
             print(ask(chain, question))
 
