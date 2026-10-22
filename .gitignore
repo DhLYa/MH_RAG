@@ -9,3 +9,4 @@ documents/*
 !documents/mh_wiki_monsters.json
 chroma_db/*
 !chroma_db/.gitkeep
+.vscode/
