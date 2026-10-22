@@ -4,24 +4,49 @@ A retrieval-augmented generation pipeline that answers questions about the Monst
 game series using a corpus built from wikipedia articles, and content from the [Monster Hunter Wiki](https://monsterhunterwiki.org/wiki/Main_Page).
 Questions are answered only from the retrieved source material. Each statement cites the numbered
 passage it came from, only the cited sources are listed, and the system says "I don't know" rather
-than falling back on the language model's own knowledge.
+than falling back on the language model's own knowledge. An optional agent mode lets the model run
+its own searches, for questions with more than one part.
 
 Built with LangChain, Voyage AI embeddings and reranking, BM25 keyword search, Chroma as a
 persistent vector store, and Gemini 3.5 Flash-Lite for free generation with a high rate limit.
 
 ## Example
 
-```
->What 4 monsters share a flagship title?
+The same two-part question in both modes. The pipeline searches once with the question as asked:
 
-The four flagship monsters featured in Monster Hunter Generations (also known as Monster Hunter X) are Astalos, Gammoth, Mizutsune, and Glavenus [1].
+```
+>The first Monster Hunter game was released on which console, and when did that console launch in Japan?
+
+The first Monster Hunter game was released on the PlayStation 2 [1][2]. The context does not provide the launch date of the PlayStation 2 console in Japan.
 
 Sources:
-  [1] Monster_Hunter_Generations   relevance=0.7930 - wikipedia_pages
+  [1] Monster_Hunter_(video_game)   relevance=0.8398 - wikipedia_pages
+  [2] Monster_Hunter                relevance=0.7969 - wikipedia_pages
 ```
 
-Five passages were retrieved; only the one the answer cites is listed. The API returns all five,
-each marked `cited` true or false.
+Agent mode (`--agent`) searches for the console first, then for that console's launch:
+
+```
+>The first Monster Hunter game was released on which console, and when did that console launch in Japan?
+
+Searched:
+  1. "Monster Hunter first game release console" (all corpora)
+  2. "PlayStation 2 release date Japan" (all corpora)
+
+The first Monster Hunter game was released on the PlayStation 2 [1], which launched in Japan on March 4, 2000 [6].
+
+Sources:
+  [1] Monster_Hunter_(video_game)   relevance=0.8639 - wikipedia_pages
+  [6] PlayStation_2                 relevance=0.9375 - wikipedia_pages
+```
+
+Reading the output:
+- Each statement ends with the numbers of the passages that support it.
+- `Sources` lists only the cited passages, under the same numbers. Each search retrieves five
+  passages, and the API returns all of them, each marked `cited` true or false.
+- In agent mode, `Searched` lists the queries the model wrote. Passage numbers continue across
+  searches, so [6] is the first passage of the second search.
+- `relevance` is the reranker's score for that passage against the query that found it.
 
 ## Pipeline
 
@@ -33,6 +58,45 @@ rest with Voyage and stores them in Chroma under content-hash IDs. Each question
   <source media="(prefers-color-scheme: dark)" srcset="docs/retrieval-pipeline-dark.svg">
   <img alt="Query-time retrieval: the question is embedded for vector search and tokenised for BM25 keyword search over the same Chroma chunks; the two top-20 lists are merged by reciprocal rank fusion into at most 40 candidates; the reranker keeps the top 5, which are numbered in the prompt; Gemini answers citing block numbers; the CLI lists cited sources and the API flags each source as cited." src="docs/retrieval-pipeline-light.svg">
 </picture>
+
+## Results
+
+Evaluated on 60 labelled questions (`evaluation/questions.json`): monster and Wikipedia facts,
+paraphrased descriptions, look-alike monsters, exact keywords such as Japanese names, two-part
+questions, and out-of-scope questions that should get "I don't know". Each change was measured
+before the next; every run is saved in `evaluation/results`.
+
+| Run | Change | Reranked hit@1 | hit@5 | Answers | Citations |
+|---|---|---|---|---|---|
+| `baseline-v2.json` | Extended question set | 0.95 | 0.98 | 0.93 | – |
+| `citations.json` | Inline `[n]` citations, prompt fixes | 0.95 | 0.98 | 0.92 | 0.92 |
+| `chunking.json` | Sentence-aware splitting, heading filter | 0.96 | 0.98 | 0.93 | 0.95 |
+| `hybrid.json` | BM25 keyword search fused with vector search | 0.98 | 1.00 | 0.95 | 0.97 |
+| `pipeline.json` | Current pipeline | 0.98 | 1.00 | 0.95 | 0.97 |
+| `agent.json` | Agent mode | – | – | **1.00** | 0.97 |
+
+- **Hit@k** is the share of questions with an expected page in the top k passages after reranking.
+  Agent mode has no single ranked list; it found an expected page for every question.
+- **Answers** contain the expected terms, or refuse an out-of-scope question. All rows are scored
+  against the current labels from their saved answers, so they're comparable.
+- **Citations** cite an expected page, or nothing for an out-of-scope question.
+- One question is worth almost two points, and Flash-Lite's answers vary slightly between runs, so
+  differences of 0.02 are noise.
+
+Pipeline against agent mode on the same questions:
+
+| | Pipeline | Agent mode |
+|---|---|---|
+| Answers correct | 57 of 60 | 60 of 60 |
+| Two-part questions | 1 of 4 | 4 of 4 |
+| Gemini calls | 60 | 123 (at most 3 for one question) |
+| Searches | 60 | 65 (two for each two-part question) |
+
+The agent fixed all three questions the pipeline gets wrong: the console-and-launch-date question
+above, "Which was introduced first, Tigrex or Nargacuga?" (the pipeline said "I don't know"), and
+"Which is weak to Thunder: Zinogre or Nargacuga?" (the pipeline said both). It never reached its
+limit of four searches. Its citation misses were a correct answer with no citation, and one
+answer citing related monsters' pages instead of the expected one, which the pipeline also did.
 
 ## Problems worth describing
 
@@ -119,13 +183,39 @@ Search one corpus only, `wikipedia_pages` (series and sales history) or `mh_wiki
 python -m rag.pipeline --corpus mh_wiki_monsters
 ```
 
-API, with the interactive docs at `http://localhost:8000/docs`. `corpus` is optional. If Voyage or
-Gemini fails, `/query` returns 503 with a plain message, saying so when the free tier is rate limiting:
+Agent mode: the model writes its own searches, as many as it needs up to four, before answering.
+It lists the searches above the answer. Slower, and uses about two LLM calls per question instead
+of one (up to five), so it suits comparisons and questions with more than one part. Combines with
+`--corpus`:
+
+```bash
+python -m rag.pipeline --agent
+```
+
+```
+>Which was introduced first, Tigrex or Nargacuga?
+
+Searched:
+  1. "Tigrex debut game" (all corpora)
+  2. "Nargacuga debut game" (all corpora)
+
+Tigrex was introduced first, debuting in Monster Hunter Freedom 2 [4], while Nargacuga was introduced later in Monster Hunter Freedom Unite [7].
+
+Sources:
+  [4] Tigrex      relevance=0.6658 - mh_wiki_monsters
+  [7] Nargacuga   relevance=0.6445 - mh_wiki_monsters
+```
+
+API, with the interactive docs at `http://localhost:8000/docs`. `corpus` and `agent` are optional;
+with `"agent": true` the response also lists the searches made. If Voyage or Gemini fails, `/query`
+returns 503 with a plain message, saying so when the free tier is rate limiting:
 
 ```bash
 uvicorn rag.api:app
 curl -X POST localhost:8000/query -H "Content-Type: application/json" \
      -d '{"question": "What is Rathalos weak to?", "corpus": "mh_wiki_monsters"}'
+curl -X POST localhost:8000/query -H "Content-Type: application/json" \
+     -d '{"question": "Which was introduced first, Tigrex or Nargacuga?", "agent": true}'
 ```
 
 Evaluation against the labelled questions in `evaluation/questions.json`. Retrieval is scored
@@ -136,11 +226,16 @@ each LLM answer for the expected terms, or for a refusal on out-of-scope questio
 python -m rag.evaluate
 python -m rag.evaluate --generate --output evaluation/results/my-run.json
 python -m rag.evaluate --retrieval vector     # compare against vector search alone
+python -m rag.evaluate --agent --output evaluation/results/agent.json
 ```
 
-Saved runs are in `evaluation/results`, each with the settings it ran on. `baseline.json` predates
-the extended question set and covers only the original 42 questions, so compare new runs against
-`baseline-v2.json` or later.
+`--agent` scores agent mode on the same questions: answers and citations as above, whether an
+expected page was among the passages it saw, and the searches and LLM calls it spent. It pauses
+longer after questions that made more calls, to stay within the free tier.
+
+Saved runs are in `evaluation/results`, each with the settings it ran on; the [Results](#results)
+section summarises them. `baseline.json` predates the extended question set and covers only the
+original 42 questions, so compare new runs against `pipeline.json` and `agent.json`.
 
 Tests and lint. The tests use fakes in place of the APIs, so they need no keys:
 
@@ -160,6 +255,7 @@ rag/
     chain.py        prompt, language model, and the LCEL retrieval chain
     pipeline.py     orchestration and command-line entry point
     api.py          FastAPI serving layer
+    agent.py        agent mode: a search tool and the loop that lets the model use it
     evaluate.py     retrieval and answer scoring on the labelled questions
 docs/               pipeline diagram, light and dark versions
 documents/          the corpus as JSON files
@@ -254,6 +350,18 @@ fusion before reranking. On the evaluation set this raised reranked hit@1 from 0
 and keyword questions from 0.80 to 1.00, with no category getting worse. The BM25 index is
 built in memory from the stored chunks at startup. `HYBRID_SEARCH` in `config.py` turns it off.
 
+**Agent mode as an option, not the default.** The pipeline searches once, with the question as
+asked. That fails when a question has two parts: for "Which was introduced first, Tigrex or
+Nargacuga?" four of the five passages came from Tigrex pages, and for "the first game's console,
+and when it launched in Japan" the second search depends on the first answer. Agent mode gives
+the model a search tool over the same hybrid search and reranker; it writes a query per subject,
+reads the results, and searches again or answers, up to `AGENT_MAX_SEARCHES` times. Passages are
+numbered across all its searches, so citations work as in the pipeline. It's built on LangChain
+tool calling without an agent framework, since one tool and a fixed limit need no more. On the
+evaluation set it answered all 60 questions correctly against 57 for the pipeline, fixing every
+two-part question, but used 123 Gemini calls instead of 60. Single-fact questions already score
+1.00 in the pipeline at half the cost, so agent mode is opt-in.
+
 ## Limitations and next steps
 
 **Evaluation is keyword-based and the question set is small.** `rag.evaluate` scores
@@ -261,8 +369,12 @@ retrieval against labelled source pages and checks answers for expected terms, w
 an LLM judge and stays within free tiers. Term matching cannot judge paraphrased answers: two
 correct answers ("highly intelligent", "lacks any determinable sex") were scored wrong until
 their labels accepted those wordings. An LLM-as-judge framework such as RAGAS would handle
-this, at the cost of more calls than Gemini's free tier allows. With 60 questions, one
-question is worth almost two points of accuracy, so small differences between runs are noise.
+this, at the cost of more calls than Gemini's free tier allows. Term matching can also accept a
+wrong answer that contains the right name, so labels can list excluded terms: "Which is weak to
+Thunder: Zinogre or Nargacuga?" rejects answers saying "both". With 60 questions, one question is
+worth almost two points of accuracy, so small differences between runs are noise. Agent mode now
+answers every question correctly, so the set can no longer tell changes to it apart; harder
+multi-part questions would be needed to measure further work on it.
 
 **No caching layer.** Caching both common queries and their generated answers would avoid
 repeat API calls, reducing latency and token consumption.
