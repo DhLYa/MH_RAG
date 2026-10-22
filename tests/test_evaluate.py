@@ -6,6 +6,7 @@ from langchain_core.documents import Document
 from rag.config import EVAL_QUESTIONS_FILE, PAGES_FILES
 from rag.evaluate import (
     answer_matches,
+    evaluate_agent_question,
     evaluate_question,
     first_hit_rank,
     is_refusal,
@@ -65,6 +66,12 @@ def test_answer_matches_accepts_alternatives():
 
 def test_answer_matches_normalises_curly_apostrophes():
     assert answer_matches("That is Safi’jiiva.", ["Safi'jiiva"])
+
+
+def test_answer_matches_rejects_excluded_terms():
+    """Only Nargacuga is weak to Thunder; naming both contains the expected term but is wrong."""
+    assert answer_matches("Nargacuga is weak to Thunder.", ["Nargacuga"], ["both"])
+    assert not answer_matches("Both Zinogre and Nargacuga are weak to Thunder.", ["Nargacuga"], ["both"])
 
 
 def test_is_refusal():
@@ -149,6 +156,81 @@ def test_failed_llm_call_is_recorded_not_scored():
     assert "429" in result["answer_error"]
 
 
+def test_pipeline_scoring_applies_excluded_terms():
+    question = {"id": "q", "category": "cross_page", "question": "?", "sources": ["Nargacuga"],
+                "answer_contains": ["Nargacuga"], "answer_excludes": ["both"]}
+    answer = FakeAnswerChain("Both Zinogre and Nargacuga are weak to Thunder [1].")
+    result = evaluate_question(question, FakeRetriever(["Nargacuga"]), FakeReranker(), answer)
+    assert result["answer_correct"] is False
+
+
+# --------------------------------------------------------------------------
+# evaluate_agent_question
+# --------------------------------------------------------------------------
+
+class FakeAgent:
+    """Answers like rag.agent.Agent, from a fixed set of passages and searches."""
+    def __init__(self, answer, sources, searches=None, llm_calls=2):
+        self.output = {
+            "answer": answer,
+            "docs": [doc(s) for s in sources],
+            "searches": searches if searches is not None else [{"query": "q", "corpus": None, "passages": [1]}],
+            "llm_calls": llm_calls,
+        }
+
+    def invoke(self, question):
+        return self.output
+
+
+TIGREX_FIRST = {"id": "q", "category": "cross_page", "question": "Tigrex or Nargacuga first?",
+                "sources": ["Tigrex", "Nargacuga"], "answer_contains": ["Tigrex"]}
+
+
+def test_agent_question_scores_answer_citations_and_cost():
+    searches = [{"query": "Tigrex debut", "corpus": None, "passages": [1, 2]},
+                {"query": "Nargacuga debut", "corpus": None, "passages": [3]}]
+    agent = FakeAgent("Tigrex came first [1], before Nargacuga [3].", ["Tigrex", "Rathalos", "Nargacuga"],
+                      searches=searches, llm_calls=3)
+    result = evaluate_agent_question(TIGREX_FIRST, agent)
+
+    assert result["found_expected"] is True
+    assert result["answer_correct"] is True
+    assert result["cited_sources"] == ["Tigrex", "Nargacuga"]
+    assert result["citation_correct"] is True
+    assert result["searches"] == searches
+    assert result["llm_calls"] == 3
+    assert "base_rank" not in result, "agent results have no single ranked list to score"
+
+
+def test_agent_question_records_when_no_expected_page_was_seen():
+    result = evaluate_agent_question(TIGREX_FIRST, FakeAgent("I don't know.", ["Rathalos"]))
+    assert result["found_expected"] is False
+    assert result["answer_correct"] is False
+
+
+def test_agent_failure_is_recorded_not_scored():
+    class FailingAgent:
+        def invoke(self, question):
+            raise RuntimeError("429 RESOURCE_EXHAUSTED")
+
+    result = evaluate_agent_question(TIGREX_FIRST, FailingAgent())
+    assert "answer_correct" not in result
+    assert "429" in result["answer_error"]
+
+
+def test_summarise_reports_agent_cost():
+    results = [
+        {"category": "cross_page", "found_expected": True, "searches": [{}, {}], "llm_calls": 3,
+         "answer_correct": True, "citation_correct": True},
+        {"category": "cross_page", "found_expected": False, "searches": [{}], "llm_calls": 2,
+         "answer_correct": False, "citation_correct": False},
+    ]
+    entry = summarise(results)["cross_page"]
+    assert entry["expected_page_found"] == 0.5
+    assert entry["avg_searches"] == 1.5
+    assert entry["avg_llm_calls"] == 2.5
+
+
 def test_summarise_excludes_out_of_scope_from_retrieval():
     results = [
         {"category": "mh_fact", "base_rank": 1, "reranked_rank": 1, "answer_correct": True, "citation_correct": True},
@@ -189,6 +271,8 @@ def test_questions_are_well_formed():
         assert bool(q["answer_contains"]) != out_of_scope, q["id"]
         for term in q["answer_contains"]:
             assert isinstance(term, str) or (isinstance(term, list) and term), q["id"]
+        for term in q.get("answer_excludes", []):
+            assert isinstance(term, str) and term, q["id"]
 
 
 @pytest.mark.skipif(not all(p.exists() for p in PAGES_FILES), reason="corpus not built")

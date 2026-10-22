@@ -2,11 +2,13 @@ import argparse
 
 from langchain_chroma import Chroma
 
-from .chain import ask, build_chain
+from .agent import Agent
+from .chain import ask, build_chain, get_llm
 from .chunking import chunk_documents
-from .config import CORPORA, HYBRID_SEARCH, RERANK_K
+from .config import AGENT_MAX_SEARCHES, CORPORA, HYBRID_SEARCH, RERANK_K
 from .ingest import load_documents
 from .vectorstore import (
+    build_compression_retrievers,
     get_candidate_retriever,
     get_compression_retriever,
     get_reranker,
@@ -53,18 +55,24 @@ def print_retrieval(candidate_retriever, reranker, question):
         print(f"  {i}. {d.metadata.get('source')}   score={score}")
         print(f"     {d.page_content[:150].strip()}")
 
-def main(retrieval_only: bool = False, corpus: str | None = None):
+def main(retrieval_only: bool = False, corpus: str | None = None, agent: bool = False):
     store = ingest()
 
     reranker = get_reranker()
-    candidate_retriever = get_candidate_retriever(store, corpus=corpus)
 
-    if retrieval_only:
-        chain = None
-        mode = "Retrieval only, no unnecessary LLM calls"
+    if agent:
+        # The agent picks a corpus per search, so it needs a retriever for each one
+        retrievers = build_compression_retrievers(store, reranker)
+        chain = Agent(get_llm(), retrievers, corpus=corpus)
+        mode = f"Agent mode, up to {AGENT_MAX_SEARCHES} searches per question"
     else:
-        chain = build_chain(get_compression_retriever(reranker, candidate_retriever))
-        mode = "RAG ready"
+        candidate_retriever = get_candidate_retriever(store, corpus=corpus)
+        if retrieval_only:
+            chain = None
+            mode = "Retrieval only, no unnecessary LLM calls"
+        else:
+            chain = build_chain(get_compression_retriever(reranker, candidate_retriever))
+            mode = "RAG ready"
     if corpus:
         mode += f" (searching {corpus} only)"
 
@@ -83,10 +91,16 @@ def main(retrieval_only: bool = False, corpus: str | None = None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Monster Hunter RAG pipeline.")
-    parser.add_argument(
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
         "--retrieval-only",
         action="store_true",
         help="Inspect retrieved chunks and scores without unnecessary LLM calls.",
+    )
+    mode.add_argument(
+        "--agent",
+        action="store_true",
+        help="Let the model search for itself, several times if needed (2-5 LLM calls per question).",
     )
     parser.add_argument(
         "--corpus",
@@ -94,4 +108,4 @@ if __name__ == "__main__":
         help="Search one corpus only (default: both).",
     )
     args = parser.parse_args()
-    main(retrieval_only=args.retrieval_only, corpus=args.corpus)
+    main(retrieval_only=args.retrieval_only, corpus=args.corpus, agent=args.agent)

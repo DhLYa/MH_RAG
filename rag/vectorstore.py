@@ -13,6 +13,7 @@ from langchain_voyageai import VoyageAIEmbeddings, VoyageAIRerank
 from .config import (
     BM25_K,
     CHROMA_DIR,
+    CORPORA,
     EMBEDDING_MODEL,
     HYBRID_SEARCH,
     RERANK_K,
@@ -117,3 +118,14 @@ def get_compression_retriever(reranker, retriever):
         base_retriever=retriever,
     )
     return compression_retriever
+
+def build_compression_retrievers(store: Chroma, reranker, hybrid: bool = HYBRID_SEARCH) -> dict:
+    """
+    A reranking retriever for each corpus filter: None searches every corpus, and each corpus
+    name searches that one. Built once and shared, since each builds its own BM25 index.
+    """
+    retrievers = {}
+    for corpus in (None, *CORPORA):
+        candidates = get_candidate_retriever(store, hybrid=hybrid, corpus=corpus)
+        retrievers[corpus] = get_compression_retriever(reranker, candidates)
+    return retrievers

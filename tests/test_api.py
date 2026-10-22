@@ -15,14 +15,32 @@ class FakeChain:
         return {"answer": "Rathalos is weak to Dragon [1].", "docs": self.docs}
 
 
+class FakeAgent:
+    """Answers like rag.agent.Agent: the pipeline's result plus the searches it made."""
+
+    def __init__(self, docs):
+        self.docs = docs
+        self.questions = []
+
+    def invoke(self, question):
+        self.questions.append(question)
+        searches = [{"query": "Rathalos weakness", "corpus": "mh_wiki_monsters", "passages": [1]}]
+        return {"answer": "Dragon [1].", "docs": self.docs, "searches": searches, "llm_calls": 2}
+
+
+def per_corpus(answerers):
+    """One answerer serves every corpus filter; a dict gives each corpus its own."""
+    if isinstance(answerers, dict):
+        return answerers
+    return {None: answerers, "wikipedia_pages": answerers, "mh_wiki_monsters": answerers}
+
+
 @pytest.fixture
 def client_with(monkeypatch):
-    """A TestClient whose startup builds fake chains instead of the real ones. Given one chain,
-    it serves every corpus filter; given a dict, each corpus key gets its own."""
-    def make(chains):
-        if not isinstance(chains, dict):
-            chains = {None: chains, "wikipedia_pages": chains, "mh_wiki_monsters": chains}
-        monkeypatch.setattr(api, "build_rag_chains", lambda: chains)
+    """A TestClient whose startup builds the given fakes instead of the real chains and agents."""
+    def make(chains, agents=None):
+        answerers = {"pipeline": per_corpus(chains), "agent": per_corpus(agents) if agents else {}}
+        monkeypatch.setattr(api, "build_answerers", lambda: answerers)
         return TestClient(api.app)
     return make
 
@@ -70,6 +88,34 @@ def test_query_routes_to_the_requested_corpus(client_with):
     assert chains["wikipedia_pages"].questions == ["Who developed Monster Hunter Now?"]
     assert chains[None].questions == ["What is Rathalos weak to?"]
     assert chains["mh_wiki_monsters"].questions == []
+
+
+def test_agent_flag_routes_to_the_agent_and_returns_its_searches(client_with):
+    doc = Document(page_content="text", metadata={"source": "Rathalos", "corpus": "mh_wiki_monsters"})
+    chain, agent = FakeChain([doc]), FakeAgent([doc])
+    with client_with(chain, agents=agent) as client:
+        response = client.post("/query", json={"question": "What is Rathalos weak to?", "agent": True})
+
+    assert agent.questions == ["What is Rathalos weak to?"]
+    assert chain.questions == []
+    body = response.json()
+    assert body["searches"] == [{"query": "Rathalos weakness", "corpus": "mh_wiki_monsters", "passages": [1]}]
+    assert body["sources"][0]["cited"] is True
+
+
+def test_agent_uses_the_requested_corpus(client_with):
+    agents = {None: FakeAgent([]), "wikipedia_pages": FakeAgent([]), "mh_wiki_monsters": FakeAgent([])}
+    with client_with(FakeChain([]), agents=agents) as client:
+        client.post("/query", json={"question": "Who made Monster Hunter Now?", "corpus": "wikipedia_pages", "agent": True})
+
+    assert agents["wikipedia_pages"].questions == ["Who made Monster Hunter Now?"]
+    assert agents[None].questions == []
+
+
+def test_pipeline_response_has_no_searches(client_with):
+    """Only agent mode chooses its own searches; the pipeline's response shape is unchanged."""
+    with client_with(FakeChain([])) as client:
+        assert "searches" not in client.post("/query", json={"question": "?"}).json()
 
 
 def test_query_rejects_an_unknown_corpus(client_with):

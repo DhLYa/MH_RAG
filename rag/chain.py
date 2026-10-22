@@ -24,7 +24,7 @@ Question: {question}
 CITATION = re.compile(r"\[(\d+(?:\s*,\s*\d+)*)\]")
 
 def get_llm():
-    llm = ChatGoogleGenerativeAI(model=LLM_MODEL, temperature=LLM_TEMPERATURE)
+    llm = ChatGoogleGenerativeAI(model=LLM_MODEL)#, temperature=LLM_TEMPERATURE)
     return llm
 
 def format_block(number: int, doc: Document) -> str:
@@ -69,11 +69,28 @@ def build_chain(retriever) -> Runnable:
         docs=lambda x: x["docs"],
     )
 
+def describe_searches(searches: list[dict]) -> list[str]:
+    """Agent mode's searches, one per line, e.g. '  1. "Tigrex debut" (mh_wiki_monsters)'."""
+    lines = ["Searched:"]
+    for i, search in enumerate(searches, 1):
+        where = search["corpus"] or "all corpora"
+        lines.append(f'  {i}. "{search["query"]}" ({where})')
+    return lines
+
 def ask(chain, question: str) -> str:
+    """Runs the pipeline chain or the agent and formats the answer with its sources for the CLI."""
     result = chain.invoke(question)
     docs = result["docs"]
+
+    lines = []
+    # Only the agent reports searches; listing them shows where the passage numbers came from
+    if result.get("searches"):
+        lines += describe_searches(result["searches"]) + [""]
+    lines.append(result["answer"])
+
     if not docs:
-        return f"{result['answer']}\n\nSources: none retrieved"
+        lines.append("\nSources: none retrieved")
+        return "\n".join(lines)
 
     # Show what the answer cites, numbered as in the answer; fall back to everything retrieved
     cited = cited_indices(result["answer"], len(docs))
@@ -84,7 +101,7 @@ def ask(chain, question: str) -> str:
 
     width = max(len(str(docs[i - 1].metadata.get("source"))) for i in shown)
 
-    lines = [result["answer"], heading]
+    lines.append(heading)
     for i in shown:
         d = docs[i - 1]
         score = d.metadata.get("relevance_score")

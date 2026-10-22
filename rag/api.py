@@ -6,11 +6,11 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
-from .chain import build_chain, cited_indices
+from .agent import Agent
+from .chain import build_chain, cited_indices, get_llm
 from .config import CORPORA
 from .vectorstore import (
-    get_candidate_retriever,
-    get_compression_retriever,
+    build_compression_retrievers,
     get_reranker,
     get_vector_store,
     is_empty,
@@ -19,26 +19,32 @@ from .vectorstore import (
 logger = logging.getLogger(__name__)
 
 
-def build_rag_chains() -> dict:
-    """One chain per corpus filter, keyed by corpus name, plus None for all corpora."""
+def build_answerers() -> dict:
+    """
+    What answers a query, by mode and then corpus filter (None for all corpora):
+    {"pipeline": {corpus: chain}, "agent": {corpus: agent}}. Both modes share one set of
+    retrievers, so each BM25 index is built once.
+    """
     store = get_vector_store()
     # The API never ingests; on an empty store every query would silently answer "I don't know"
     if is_empty(store):
         raise RuntimeError(
             "Vector store is empty. Run `python -m rag.pipeline` once to ingest the corpus."
         )
-    reranker = get_reranker()
-    chains = {}
-    for corpus in (None, *CORPORA):
-        retriever = get_candidate_retriever(store, corpus=corpus)
-        chains[corpus] = build_chain(get_compression_retriever(reranker, retriever))
-    return chains
+    retrievers = build_compression_retrievers(store, get_reranker())
+    llm = get_llm()
+
+    answerers = {"pipeline": {}, "agent": {}}
+    for corpus, retriever in retrievers.items():
+        answerers["pipeline"][corpus] = build_chain(retriever)
+        answerers["agent"][corpus] = Agent(llm, retrievers, corpus=corpus)
+    return answerers
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Built once at startup rather than on import, so tests can substitute the chains
-    app.state.chains = build_rag_chains()
+    # Built once at startup rather than on import, so tests can substitute fakes
+    app.state.answerers = build_answerers()
     yield
 
 
@@ -49,6 +55,8 @@ class Query(BaseModel):
     question: str
     # Search one corpus only; omitted or null searches both
     corpus: Literal[CORPORA] | None = None
+    # Let the model search for itself, several times if needed; slower and uses 2-5 LLM calls
+    agent: bool = False
 
 @app.get("/health")
 def health():
@@ -65,8 +73,10 @@ def is_rate_limit(error: Exception) -> bool:
 
 @app.post("/query")
 def query(q: Query, request: Request):
+    mode = "agent" if q.agent else "pipeline"
+    answerer = request.app.state.answerers[mode][q.corpus]
     try:
-        result = request.app.state.chains[q.corpus].invoke(q.question)
+        result = answerer.invoke(q.question)
     except Exception as e:
         # The embedding, reranking or generation call failed upstream. Log the details here and
         # tell the client what it can do about it, without passing the provider's error text on.
@@ -82,7 +92,7 @@ def query(q: Query, request: Request):
             detail="Answering failed because a model provider is unavailable. Try again shortly.",
         ) from e
     cited = cited_indices(result["answer"], len(result["docs"]))
-    return {
+    response = {
         "answer": result["answer"],
         "sources": [
             {
@@ -95,3 +105,7 @@ def query(q: Query, request: Request):
             for i, d in enumerate(result["docs"], 1)
         ],
     }
+    # The agent's own queries, with the passage numbers each returned
+    if q.agent:
+        response["searches"] = result["searches"]
+    return response

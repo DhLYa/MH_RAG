@@ -193,6 +193,7 @@ def test_agent_works_with_the_cli_output():
     model = FakeModel([reply(calls=[search_call("a")]), reply(calls=[search_call("b")]), reply("PS2 [1], March 4, 2000 [3].")])
     out = ask(Agent(model, found), "?")
 
+    assert out.startswith('Searched:\n  1. "a" (all corpora)\n  2. "b" (all corpora)\n\nPS2 [1]')
     assert "[1] Monster_Hunter_(video_game)" in out
     assert "[3] PlayStation_2" in out
     assert "[2] Monster_Hunter " not in out, "uncited passages aren't listed"

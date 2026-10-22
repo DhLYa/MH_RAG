@@ -92,7 +92,7 @@
    "sources": ["Ivory Lagiacrus"], "answer_contains": ["Fire", "Dragon"]},
 
   {"id": "thunder-weak-comparison", "category": "cross_page", "question": "Which is weak to Thunder: Zinogre or Nargacuga?",
-   "sources": ["Zinogre", "Nargacuga"], "answer_contains": ["Nargacuga"]},
+   "sources": ["Zinogre", "Nargacuga"], "answer_contains": ["Nargacuga"], "answer_excludes": ["both"]},
   {"id": "tigrex-nargacuga-debut", "category": "cross_page", "question": "Which was introduced first, Tigrex or Nargacuga?",
    "sources": ["Tigrex", "Nargacuga"], "answer_contains": ["Tigrex"]},
   {"id": "shared-element", "category": "cross_page", "question": "What element do both Rajang and Zinogre use?",
