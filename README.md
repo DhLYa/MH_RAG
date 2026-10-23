@@ -66,6 +66,13 @@ paraphrased descriptions, look-alike monsters, exact keywords such as Japanese n
 questions, and out-of-scope questions that should get "I don't know". Each change was measured
 before the next; every run is saved in `evaluation/results`.
 
+The set has since grown to 76 questions, adding harder ones the runs below predate: multi-step
+lookups (a monster's debut game, then that game's console), comparisons of figures and dates
+across pages, and questions about the series that the corpus can't answer, which should still
+get "I don't know". Two-part questions are now also scored on whether *every* page they need
+reached the model. On retrieval alone, the pipeline put an expected page in the top 5 for all 16
+of them, but every needed page for only 7.
+
 | Run | Change | Reranked hit@1 | hit@5 | Answers | Citations |
 |---|---|---|---|---|---|
 | `baseline-v2.json` | Extended question set | 0.95 | 0.98 | 0.93 | – |
@@ -232,6 +239,10 @@ python -m rag.evaluate --agent --output evaluation/results/agent.json
 `--agent` scores agent mode on the same questions: answers and citations as above, whether an
 expected page was among the passages it saw, and the searches and LLM calls it spent. It pauses
 longer after questions that made more calls, to stay within the free tier.
+
+Questions marked `needs_all_sources` need facts from every listed page, such as one per monster in
+a comparison, so both modes also report whether all of those pages reached the model. Elsewhere
+the listed pages are alternatives, any one of which counts.
 
 Saved runs are in `evaluation/results`, each with the settings it ran on; the [Results](#results)
 section summarises them. `baseline.json` predates the extended question set and covers only the

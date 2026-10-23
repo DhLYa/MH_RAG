@@ -5,6 +5,7 @@ from langchain_core.documents import Document
 
 from rag.config import EVAL_QUESTIONS_FILE, PAGES_FILES
 from rag.evaluate import (
+    all_sources_found,
     answer_matches,
     evaluate_agent_question,
     evaluate_question,
@@ -37,6 +38,12 @@ def test_first_hit_rank_accepts_any_expected_source():
 def test_first_hit_rank_none_when_missed():
     assert first_hit_rank([doc("Tigrex")], {"Zinogre"}) is None
     assert first_hit_rank([], {"Zinogre"}) is None
+
+
+def test_all_sources_found_needs_every_page():
+    docs = [doc("Tigrex"), doc("Molten Tigrex"), doc("Tigrex")]
+    assert not all_sources_found(docs, {"Tigrex", "Nargacuga"})
+    assert all_sources_found(docs + [doc("Nargacuga")], {"Tigrex", "Nargacuga"})
 
 
 def test_retrieval_metrics():
@@ -156,6 +163,21 @@ def test_failed_llm_call_is_recorded_not_scored():
     assert "429" in result["answer_error"]
 
 
+def test_pipeline_records_whether_every_page_reached_the_model():
+    """Four Tigrex chunks and no Nargacuga: a hit on 'any expected page', but not enough to compare them."""
+    question = dict(TIGREX_FIRST, needs_all_sources=True)
+    store = FakeRetriever(["Nargacuga", "Tigrex", "Tigrex"])    # FakeReranker keeps the last two, reversed
+    result = evaluate_question(question, store, FakeReranker())
+    assert result["reranked_rank"] == 1
+    assert result["all_sources_found"] is False
+
+
+def test_questions_without_the_flag_skip_the_all_pages_check():
+    question = {"id": "q", "category": "variant", "question": "?", "sources": ["Kushala Daora", "Rusted Kushala Daora"],
+                "answer_contains": ["Kushala"]}
+    assert "all_sources_found" not in evaluate_question(question, FakeRetriever(["Kushala Daora"]), FakeReranker())
+
+
 def test_pipeline_scoring_applies_excluded_terms():
     question = {"id": "q", "category": "cross_page", "question": "?", "sources": ["Nargacuga"],
                 "answer_contains": ["Nargacuga"], "answer_excludes": ["both"]}
@@ -200,6 +222,26 @@ def test_agent_question_scores_answer_citations_and_cost():
     assert result["searches"] == searches
     assert result["llm_calls"] == 3
     assert "base_rank" not in result, "agent results have no single ranked list to score"
+
+
+def test_agent_records_whether_it_saw_every_page():
+    question = dict(TIGREX_FIRST, needs_all_sources=True)
+    one_monster = evaluate_agent_question(question, FakeAgent("Tigrex [1].", ["Tigrex", "Rathalos"]))
+    both = evaluate_agent_question(question, FakeAgent("Tigrex [1].", ["Tigrex", "Nargacuga"]))
+    assert one_monster["all_sources_found"] is False
+    assert both["all_sources_found"] is True
+
+
+def test_summarise_reports_the_share_with_every_page():
+    results = [
+        {"category": "multi_hop", "all_sources_found": True},
+        {"category": "multi_hop", "all_sources_found": False},
+        {"category": "mh_fact"},
+    ]
+    summary = summarise(results)
+    assert summary["all"]["needs_all_scored"] == 2
+    assert summary["all"]["all_sources_found"] == 0.5
+    assert "all_sources_found" not in summary["mh_fact"]
 
 
 def test_agent_question_records_when_no_expected_page_was_seen():
@@ -256,8 +298,12 @@ CATEGORIES = {
     "cross_page",       # comparisons needing facts from two pages
     "keyword",          # rare exact terms such as Japanese names and quest titles
     "lost_content",     # facts only in chunks the original length filter dropped
-    "out_of_scope",
+    "multi_hop",        # one answer leads to the next lookup, e.g. monster -> debut game -> console
+    "comparison",       # two figures or dates from different pages, compared or combined
+    "unanswerable",     # about the series, but the corpus doesn't hold the answer
+    "out_of_scope",     # not about the series at all
 }
+NO_ANSWER_CATEGORIES = {"unanswerable", "out_of_scope"}
 
 
 def test_questions_are_well_formed():
@@ -265,20 +311,23 @@ def test_questions_are_well_formed():
     assert len({q["id"] for q in questions}) == len(questions), "ids must be unique"
     for q in questions:
         assert q["category"] in CATEGORIES, q["id"]
-        # Out-of-scope questions have no source to find and nothing to say but "I don't know"
-        out_of_scope = q["category"] == "out_of_scope"
-        assert bool(q["sources"]) != out_of_scope, q["id"]
-        assert bool(q["answer_contains"]) != out_of_scope, q["id"]
+        # Questions the corpus can't answer have no source to find and nothing to say but "I don't know"
+        no_answer = q["category"] in NO_ANSWER_CATEGORIES
+        assert bool(q["sources"]) != no_answer, q["id"]
+        assert bool(q["answer_contains"]) != no_answer, q["id"]
         for term in q["answer_contains"]:
             assert isinstance(term, str) or (isinstance(term, list) and term), q["id"]
         for term in q.get("answer_excludes", []):
             assert isinstance(term, str) and term, q["id"]
+        if q.get("needs_all_sources"):
+            assert len(q["sources"]) >= 2, f"{q['id']}: needing every page only means something with several"
 
 
 @pytest.mark.skipif(not all(p.exists() for p in PAGES_FILES), reason="corpus not built")
 def test_question_labels_match_the_corpus():
     """Every expected source exists, and every expected answer term appears in one of them,
-    so a failing question points at the pipeline rather than at a mislabelled question."""
+    so a failing question points at the pipeline rather than at a mislabelled question.
+    Derived answers, such as a gap in years worked out from two dates, aren't in the text."""
     pages = {}
     for path in PAGES_FILES:
         with open(path, encoding="utf-8") as f:
@@ -287,6 +336,8 @@ def test_question_labels_match_the_corpus():
     for q in load_questions(EVAL_QUESTIONS_FILE):
         for source in q["sources"]:
             assert source in pages, f"{q['id']}: no page titled {source!r}"
+        if q.get("answer_is_derived"):
+            continue
         source_text = " ".join(pages[s] for s in q["sources"]).lower()
         for term in q["answer_contains"]:
             alternatives = [term] if isinstance(term, str) else term

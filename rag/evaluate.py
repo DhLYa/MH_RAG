@@ -69,6 +69,13 @@ def first_hit_rank(docs: list[Document], expected_sources: set[str]) -> int | No
     return None
 
 
+def all_sources_found(docs: list[Document], expected_sources: set[str]) -> bool:
+    """True if every expected page has at least one passage among the docs. For questions that
+    need facts from several pages, where finding any one of them isn't enough."""
+    found = {doc.metadata.get("source") for doc in docs}
+    return expected_sources <= found
+
+
 def retrieval_metrics(ranks: list[int | None], ks: tuple[int, ...]) -> dict[str, float]:
     """Hit rate at each k (share of questions with a relevant chunk in the top k),
     and mean reciprocal rank, where a miss scores 0."""
@@ -167,6 +174,9 @@ def evaluate_question(question: dict, candidate_retriever, reranker, answer_chai
     if expected:
         result["base_rank"] = first_hit_rank(candidates, expected)
         result["reranked_rank"] = first_hit_rank(reranked, expected)
+    if question.get("needs_all_sources"):
+        # The five reranked passages are all the model reads, so every page must be among them
+        result["all_sources_found"] = all_sources_found(reranked, expected)
 
     if answer_chain is not None:
         try:
@@ -205,6 +215,8 @@ def evaluate_agent_question(question: dict, agent) -> dict:
     result["llm_calls"] = output["llm_calls"]
     if expected:
         result["found_expected"] = first_hit_rank(docs, expected) is not None
+    if question.get("needs_all_sources"):
+        result["all_sources_found"] = all_sources_found(docs, expected)
     result.update(score_answer(question, output["answer"], docs))
     return result
 
@@ -229,6 +241,21 @@ def summarise(results: list[dict]) -> dict:
             entry["answer_accuracy"] = correct / len(answered)
             cited_correctly = sum(1 for r in answered if r.get("citation_correct"))
             entry["citation_accuracy"] = cited_correctly / len(answered)
+
+        # Questions needing several pages: did every one reach the model.
+        # Only questions marked needs_all_sources carry the key, so the rest aren't counted as misses.
+        needs_all = []
+        for r in group:
+            if "all_sources_found" in r:
+                needs_all.append(r)
+
+        if needs_all:
+            all_found = 0
+            for r in needs_all:
+                if r["all_sources_found"]:
+                    all_found += 1
+            entry["needs_all_scored"] = len(needs_all)
+            entry["all_sources_found"] = all_found / len(needs_all)
 
         # Agent mode only: did it find an expected page, and what did it spend doing so
         searched = [r for r in group if "found_expected" in r]
@@ -288,6 +315,19 @@ def print_agent_report(summary: dict, results: list[dict]) -> None:
             queries = [s["query"] for s in r["searches"]] or ["(no searches)"]
             print(f"  [{r['id']}] {r['question']}")
             print(f"      expected {r['expected_sources']}; searched {queries}")
+
+
+def print_all_sources_report(summary: dict, results: list[dict]) -> None:
+    """Questions whose answer needs facts from several pages, e.g. one per monster in a comparison."""
+    entry = summary["all"]
+    if "all_sources_found" not in entry:
+        return
+    found = round(entry["all_sources_found"] * entry["needs_all_scored"])
+    print(f"\nQuestions needing several pages: every page reached the model for {found} of {entry['needs_all_scored']}")
+    for r in results:
+        if r.get("all_sources_found") is False:
+            missing = sorted(set(r["expected_sources"]) - set(r.get("retrieved", [])))
+            print(f"  [{r['id']}] missing {missing}")
 
 
 def print_generation_report(summary: dict, results: list[dict]) -> None:
@@ -357,6 +397,7 @@ def main(generate: bool, limit: int | None, delay: float, questions_path: Path, 
         print_agent_report(summary, results)
     else:
         print_retrieval_report(summary, results)
+    print_all_sources_report(summary, results)
     if calls_llm:
         print_generation_report(summary, results)
 
