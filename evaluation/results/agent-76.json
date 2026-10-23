@@ -1,0 +1,3265 @@
+{
+  "config": {
+    "EMBEDDING_MODEL": "voyage-4-large",
+    "RERANKER_MODEL": "rerank-2.5",
+    "LLM_MODEL": "gemini-3.5-flash-lite",
+    "LLM_TEMPERATURE": 0,
+    "CHUNK_SIZE": 800,
+    "CHUNK_OVERLAP": 120,
+    "MIN_CHUNK_CHARS": 10,
+    "RETRIEVAL_K": 20,
+    "BM25_K": 20,
+    "RERANK_K": 5,
+    "HYBRID_SEARCH": true,
+    "MODE": "agent",
+    "AGENT_MAX_SEARCHES": 4
+  },
+  "summary": {
+    "all": {
+      "questions": 76,
+      "answer_accuracy": 0.9736842105263158,
+      "citation_accuracy": 0.9868421052631579,
+      "needs_all_scored": 16,
+      "all_sources_found": 1.0,
+      "expected_page_found": 1.0,
+      "avg_searches": 1.3289473684210527,
+      "avg_llm_calls": 2.3026315789473686
+    },
+    "mh_fact": {
+      "questions": 16,
+      "answer_accuracy": 1.0,
+      "citation_accuracy": 1.0,
+      "expected_page_found": 1.0,
+      "avg_searches": 1.125,
+      "avg_llm_calls": 2.125
+    },
+    "mh_paraphrase": {
+      "questions": 8,
+      "answer_accuracy": 1.0,
+      "citation_accuracy": 1.0,
+      "expected_page_found": 1.0,
+      "avg_searches": 1.0,
+      "avg_llm_calls": 2.0
+    },
+    "wiki_fact": {
+      "questions": 14,
+      "answer_accuracy": 1.0,
+      "citation_accuracy": 1.0,
+      "expected_page_found": 1.0,
+      "avg_searches": 1.0,
+      "avg_llm_calls": 2.0
+    },
+    "variant": {
+      "questions": 6,
+      "answer_accuracy": 1.0,
+      "citation_accuracy": 1.0,
+      "expected_page_found": 1.0,
+      "avg_searches": 1.0,
+      "avg_llm_calls": 2.0
+    },
+    "cross_page": {
+      "questions": 4,
+      "answer_accuracy": 1.0,
+      "citation_accuracy": 1.0,
+      "needs_all_scored": 4,
+      "all_sources_found": 1.0,
+      "expected_page_found": 1.0,
+      "avg_searches": 2.0,
+      "avg_llm_calls": 2.5
+    },
+    "multi_hop": {
+      "questions": 8,
+      "answer_accuracy": 0.75,
+      "citation_accuracy": 1.0,
+      "needs_all_scored": 8,
+      "all_sources_found": 1.0,
+      "expected_page_found": 1.0,
+      "avg_searches": 2.0,
+      "avg_llm_calls": 3.0
+    },
+    "comparison": {
+      "questions": 4,
+      "answer_accuracy": 1.0,
+      "citation_accuracy": 1.0,
+      "needs_all_scored": 4,
+      "all_sources_found": 1.0,
+      "expected_page_found": 1.0,
+      "avg_searches": 2.5,
+      "avg_llm_calls": 3.5
+    },
+    "keyword": {
+      "questions": 5,
+      "answer_accuracy": 1.0,
+      "citation_accuracy": 1.0,
+      "expected_page_found": 1.0,
+      "avg_searches": 1.0,
+      "avg_llm_calls": 2.0
+    },
+    "lost_content": {
+      "questions": 3,
+      "answer_accuracy": 1.0,
+      "citation_accuracy": 0.6666666666666666,
+      "expected_page_found": 1.0,
+      "avg_searches": 1.0,
+      "avg_llm_calls": 2.0
+    },
+    "unanswerable": {
+      "questions": 4,
+      "answer_accuracy": 1.0,
+      "citation_accuracy": 1.0,
+      "avg_searches": 2.0,
+      "avg_llm_calls": 3.0
+    },
+    "out_of_scope": {
+      "questions": 4,
+      "answer_accuracy": 1.0,
+      "citation_accuracy": 1.0,
+      "avg_searches": 1.25,
+      "avg_llm_calls": 2.25
+    }
+  },
+  "results": [
+    {
+      "id": "rathalos-weakness",
+      "category": "mh_fact",
+      "question": "What elements is Rathalos weakest to?",
+      "expected_sources": [
+        "Rathalos"
+      ],
+      "retrieved": [
+        "Rathalos",
+        "Silver Rathalos",
+        "Azure Rathalos",
+        "Zenith Rathalos",
+        "Silver Rathalos"
+      ],
+      "searches": [
+        {
+          "query": "Rathalos weaknesses elements",
+          "corpus": "mh_wiki_monsters",
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Rathalos is weakest to Water, Ice, and Dragon [1].",
+      "cited_sources": [
+        "Rathalos"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "zinogre-element",
+      "category": "mh_fact",
+      "question": "What element does Zinogre use?",
+      "expected_sources": [
+        "Zinogre"
+      ],
+      "retrieved": [
+        "Zinogre",
+        "Zinogre",
+        "Thunderlord Zinogre",
+        "Stygian Zinogre",
+        "Apex Zinogre"
+      ],
+      "searches": [
+        {
+          "query": "Zinogre element",
+          "corpus": "mh_wiki_monsters",
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Zinogre uses the Thunder element [1].",
+      "cited_sources": [
+        "Zinogre"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "nergigante-weakness",
+      "category": "mh_fact",
+      "question": "What is Nergigante weak to?",
+      "expected_sources": [
+        "Nergigante"
+      ],
+      "retrieved": [
+        "Nergigante",
+        "Ruiner Nergigante",
+        "Nergigante",
+        "Omega Micros",
+        "Nergigante"
+      ],
+      "searches": [
+        {
+          "query": "Nergigante weakness",
+          "corpus": "mh_wiki_monsters",
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Nergigante is weakest to Thunder [1].",
+      "cited_sources": [
+        "Nergigante"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "mizutsune-class",
+      "category": "mh_fact",
+      "question": "What classification of monster is Mizutsune?",
+      "expected_sources": [
+        "Mizutsune"
+      ],
+      "retrieved": [
+        "Mizutsune",
+        "Soulseer Mizutsune",
+        "Apex Mizutsune",
+        "Violet Mizutsune",
+        "Violet Mizutsune"
+      ],
+      "searches": [
+        {
+          "query": "Mizutsune classification",
+          "corpus": "mh_wiki_monsters",
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Mizutsune is classified as a Leviathan [1].",
+      "cited_sources": [
+        "Mizutsune"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "brachydios-debut",
+      "category": "mh_fact",
+      "question": "In which game was Brachydios first introduced?",
+      "expected_sources": [
+        "Brachydios"
+      ],
+      "retrieved": [
+        "Brachydios",
+        "Brachydios",
+        "Brachydios",
+        "Brachydios",
+        "Brachydios"
+      ],
+      "searches": [
+        {
+          "query": "Brachydios debut game",
+          "corpus": "mh_wiki_monsters",
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Brachydios was introduced in Monster Hunter 3 Ultimate [2].",
+      "cited_sources": [
+        "Brachydios"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "kushala-alias",
+      "category": "mh_fact",
+      "question": "What is Kushala Daora's Japanese alias?",
+      "expected_sources": [
+        "Kushala Daora"
+      ],
+      "retrieved": [
+        "Kushala Daora",
+        "Risen Kushala Daora",
+        "Rusted Kushala Daora",
+        "Garbha Daora",
+        "Risen Kushala Daora"
+      ],
+      "searches": [
+        {
+          "query": "Kushala Daora Japanese alias",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Kushala Daora's Japanese alias is Steel Dragon (鋼龍) [1].",
+      "cited_sources": [
+        "Kushala Daora"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "nargacuga-debut",
+      "category": "mh_fact",
+      "question": "Which game introduced Nargacuga?",
+      "expected_sources": [
+        "Nargacuga"
+      ],
+      "retrieved": [
+        "Nargacuga",
+        "Nargacuga",
+        "Nargacuga",
+        "Nargacuga",
+        "Nargacuga"
+      ],
+      "searches": [
+        {
+          "query": "Nargacuga debut game",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Nargacuga was introduced in Monster Hunter Freedom Unite [2].",
+      "cited_sources": [
+        "Nargacuga"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "velkhana-weakness",
+      "category": "mh_fact",
+      "question": "What element is Velkhana weakest to?",
+      "expected_sources": [
+        "Velkhana"
+      ],
+      "retrieved": [
+        "Velkhana",
+        "Velkhana",
+        "Omega Micros",
+        "Omega Planetes",
+        "Ukanlos"
+      ],
+      "searches": [
+        {
+          "query": "Velkhana weakness element",
+          "corpus": "mh_wiki_monsters",
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Velkhana is weakest to Fire [1].",
+      "cited_sources": [
+        "Velkhana"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "gore-magala-status",
+      "category": "mh_fact",
+      "question": "What status effect does Gore Magala inflict?",
+      "expected_sources": [
+        "Gore Magala"
+      ],
+      "retrieved": [
+        "Gore Magala",
+        "Gore Magala",
+        "Gore Magala",
+        "Chaotic Gore Magala",
+        "Gore Magala"
+      ],
+      "searches": [
+        {
+          "query": "Gore Magala status effect",
+          "corpus": "mh_wiki_monsters",
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Gore Magala inflicts the Frenzy Virus status effect [2].",
+      "cited_sources": [
+        "Gore Magala"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "great-jagras-profile",
+      "category": "mh_fact",
+      "question": "What kind of monster is Great Jagras and what is it weak to?",
+      "expected_sources": [
+        "Great Jagras"
+      ],
+      "retrieved": [
+        "Great Jagras",
+        "Great Jaggi",
+        "Great Jagras",
+        "Jaggia",
+        "Jaggi"
+      ],
+      "searches": [
+        {
+          "query": "Great Jagras classification weakness",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Great Jagras is a Fanged Wyvern and it is weakest to Fire [1].",
+      "cited_sources": [
+        "Great Jagras"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "deviljho-related",
+      "category": "mh_fact",
+      "question": "Which monsters are related to Deviljho?",
+      "expected_sources": [
+        "Deviljho"
+      ],
+      "retrieved": [
+        "Feral Deviljho",
+        "Deviljho",
+        "Flame Tyrant",
+        "Savage Deviljho",
+        "Abiorg",
+        "Feral Deviljho",
+        "Savage Deviljho",
+        "Savage Deviljho",
+        "Deviljho",
+        "Savage Deviljho"
+      ],
+      "searches": [
+        {
+          "query": "Deviljho related monsters classification family",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "query": "Starved Deviljho",
+          "corpus": null,
+          "passages": [
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        },
+        {
+          "query": "Starved Deviljho monster related",
+          "corpus": null,
+          "passages": [
+            6,
+            1,
+            3,
+            7,
+            9
+          ]
+        }
+      ],
+      "llm_calls": 4,
+      "found_expected": true,
+      "answer": "Monsters related to Deviljho include:\n\n- Savage Deviljho [1][2][3][4]\n- Flame Tyrant [1][3]\n- Feral Deviljho [1]\n- Starved Deviljho [1][6]\n- Abiorg [5]",
+      "cited_sources": [
+        "Feral Deviljho",
+        "Deviljho",
+        "Flame Tyrant",
+        "Savage Deviljho",
+        "Feral Deviljho",
+        "Abiorg"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "arkveld-alias",
+      "category": "mh_fact",
+      "question": "What is the Japanese alias of Arkveld?",
+      "expected_sources": [
+        "Arkveld"
+      ],
+      "retrieved": [
+        "Arkveld",
+        "Guardian Arkveld",
+        "Arkveld",
+        "Guardian Arkveld",
+        "Araketa"
+      ],
+      "searches": [
+        {
+          "query": "Arkveld Japanese alias",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Chain Blade Wyvern (鎖刃竜) [1]",
+      "cited_sources": [
+        "Arkveld"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "rathalos-counterpart",
+      "category": "mh_fact",
+      "question": "Which monster is the female counterpart of Rathalos?",
+      "expected_sources": [
+        "Rathalos",
+        "Rathian"
+      ],
+      "retrieved": [
+        "Rathian",
+        "Rathian",
+        "Rathian",
+        "Rathian",
+        "Rathalos"
+      ],
+      "searches": [
+        {
+          "query": "Rathalos female counterpart",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "The female counterpart of Rathalos is the Rathian [1][2].",
+      "cited_sources": [
+        "Rathian",
+        "Rathian"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "malzeno-blight",
+      "category": "mh_fact",
+      "question": "Besides Dragonblight, what blight does Malzeno inflict?",
+      "expected_sources": [
+        "Malzeno"
+      ],
+      "retrieved": [
+        "Malzeno",
+        "Monster_Hunter_Rise",
+        "Malzeno",
+        "Primordial Malzeno",
+        "Malzeno"
+      ],
+      "searches": [
+        {
+          "query": "Malzeno blight",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Bloodblight [3]",
+      "cited_sources": [
+        "Malzeno"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "teostra-weakness",
+      "category": "mh_fact",
+      "question": "What is Teostra weak to?",
+      "expected_sources": [
+        "Teostra"
+      ],
+      "retrieved": [
+        "Teostra",
+        "Risen Teostra",
+        "Lunastra",
+        "Teostra",
+        "Toastra"
+      ],
+      "searches": [
+        {
+          "query": "Teostra weaknesses",
+          "corpus": "mh_wiki_monsters",
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Teostra is weakest to Dragon and Water [1].",
+      "cited_sources": [
+        "Teostra"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "gammoth-class",
+      "category": "mh_fact",
+      "question": "What classification is Gammoth?",
+      "expected_sources": [
+        "Gammoth"
+      ],
+      "retrieved": [
+        "Gammoth",
+        "Gammoth",
+        "Gammoth",
+        "Gammoth",
+        "Gammoth"
+      ],
+      "searches": [
+        {
+          "query": "Gammoth",
+          "corpus": "mh_wiki_monsters",
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Gammoth is classified as a Fanged Beast [1][2].",
+      "cited_sources": [
+        "Gammoth",
+        "Gammoth"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "wind-elder-dragon",
+      "category": "mh_paraphrase",
+      "question": "Which Elder Dragon can manipulate the wind and stir up tornadoes?",
+      "expected_sources": [
+        "Kushala Daora",
+        "Risen Kushala Daora",
+        "Rusted Kushala Daora"
+      ],
+      "retrieved": [
+        "Kushala Daora",
+        "Kushala Daora",
+        "Wind Serpent Ibushi",
+        "Kushala Daora",
+        "Amatsu"
+      ],
+      "searches": [
+        {
+          "query": "Elder Dragon manipulate wind tornadoes",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Kushala Daora [1]",
+      "cited_sources": [
+        "Kushala Daora"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "thunderbug-symbiosis",
+      "category": "mh_paraphrase",
+      "question": "Which monster has a symbiotic relationship with Thunderbugs?",
+      "expected_sources": [
+        "Apex Zinogre",
+        "Stygian Zinogre",
+        "Zinogre"
+      ],
+      "retrieved": [
+        "Zinogre",
+        "Zinogre",
+        "Zinogre",
+        "Zinogre",
+        "Zinogre"
+      ],
+      "searches": [
+        {
+          "query": "symbiotic relationship Thunderbugs monster",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Zinogre [1].",
+      "cited_sources": [
+        "Zinogre"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "xenojiiva-mature",
+      "category": "mh_paraphrase",
+      "question": "Which monster is the mature form of Xeno'jiiva?",
+      "expected_sources": [
+        "Safi'jiiva",
+        "Xeno'jiiva"
+      ],
+      "retrieved": [
+        "Safi'jiiva",
+        "Safi'jiiva",
+        "Xeno'jiiva",
+        "Safi'jiiva",
+        "Xeno'jiiva"
+      ],
+      "searches": [
+        {
+          "query": "Xeno'jiiva mature form",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Safi'jiiva is the mature form of Xeno'jiiva [1].",
+      "cited_sources": [
+        "Safi'jiiva"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "slime-mold",
+      "category": "mh_paraphrase",
+      "question": "Which monster coats itself in an explosive slime mold?",
+      "expected_sources": [
+        "Brachydios",
+        "Raging Brachydios"
+      ],
+      "retrieved": [
+        "Brachydios",
+        "Raging Brachydios",
+        "Raging Brachydios",
+        "Brachydios",
+        "Raging Brachydios"
+      ],
+      "searches": [
+        {
+          "query": "explosive slime mold monster hunter",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Brachydios [1].",
+      "cited_sources": [
+        "Brachydios"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "qurio-host",
+      "category": "mh_paraphrase",
+      "question": "Which Elder Dragon acts as a host for the parasitic Qurio?",
+      "expected_sources": [
+        "Malzeno",
+        "Primordial Malzeno"
+      ],
+      "retrieved": [
+        "Gaismagorm",
+        "Malzeno",
+        "Primordial Malzeno",
+        "Malzeno",
+        "Risen Kushala Daora"
+      ],
+      "searches": [
+        {
+          "query": "Qurio host Elder Dragon",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Gaismagorm is the true host of the parasitic Qurio swarm [1]. Malzeno also acts as a host that allows the Qurio to reside on its body [2].",
+      "cited_sources": [
+        "Gaismagorm",
+        "Malzeno"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "blind-scales",
+      "category": "mh_paraphrase",
+      "question": "Which blind monster uses hair-like scales to sense its surroundings?",
+      "expected_sources": [
+        "Gore Magala"
+      ],
+      "retrieved": [
+        "Gore Magala",
+        "Gore Magala",
+        "Great Jagras",
+        "Mizutsune",
+        "Bazelgeuse"
+      ],
+      "searches": [
+        {
+          "query": "blind monster hair-like scales",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Gore Magala [1]",
+      "cited_sources": [
+        "Gore Magala"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "lords-of-seas",
+      "category": "mh_paraphrase",
+      "question": "Which Leviathan is feared as the Lord of the Seas?",
+      "expected_sources": [
+        "Lagiacrus"
+      ],
+      "retrieved": [
+        "Lagiacrus",
+        "Lagiacrus",
+        "Lagiacrus",
+        "Lagiacrus",
+        "Lagiacrus"
+      ],
+      "searches": [
+        {
+          "query": "Lord of the Seas Leviathan Monster Hunter",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Lagiacrus [1]",
+      "cited_sources": [
+        "Lagiacrus"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "blade-tail",
+      "category": "mh_paraphrase",
+      "question": "Which Brute Wyvern swings a metallic blade-like tail that can become superheated?",
+      "expected_sources": [
+        "Acidic Glavenus",
+        "Glavenus",
+        "Hellblade Glavenus"
+      ],
+      "retrieved": [
+        "Glavenus",
+        "Glavenus",
+        "Hellblade Glavenus",
+        "Glavenus",
+        "Abiorg"
+      ],
+      "searches": [
+        {
+          "query": "Brute Wyvern metallic blade tail superheated",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Glavenus [1][2]",
+      "cited_sources": [
+        "Glavenus",
+        "Glavenus"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "original-platform",
+      "category": "wiki_fact",
+      "question": "What platform was the original Monster Hunter released on?",
+      "expected_sources": [
+        "Monster_Hunter",
+        "Monster_Hunter_(video_game)"
+      ],
+      "retrieved": [
+        "Monster_Hunter_(video_game)",
+        "Monster_Hunter",
+        "Monster_Hunter",
+        "Monster_Hunter_(video_game)",
+        "Monster_Hunter"
+      ],
+      "searches": [
+        {
+          "query": "Monster Hunter original release platform",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "The original Monster Hunter was released on the PlayStation 2 [1].",
+      "cited_sources": [
+        "Monster_Hunter_(video_game)"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "world-sales",
+      "category": "wiki_fact",
+      "question": "How many copies has Monster Hunter: World shipped?",
+      "expected_sources": [
+        "Monster_Hunter: World"
+      ],
+      "retrieved": [
+        "Monster_Hunter: World",
+        "Monster_Hunter: World",
+        "Monster_Hunter: World",
+        "Monster_Hunter: World",
+        "Monster_Hunter: World"
+      ],
+      "searches": [
+        {
+          "query": "Monster Hunter World copies shipped",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Monster Hunter: World has shipped over 30 million copies by June 2026 [4].",
+      "cited_sources": [
+        "Monster_Hunter: World"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "wilds-launch-sales",
+      "category": "wiki_fact",
+      "question": "How many copies did Monster Hunter Wilds sell in its first three days?",
+      "expected_sources": [
+        "Monster_Hunter_Wilds"
+      ],
+      "retrieved": [
+        "Monster_Hunter_Wilds",
+        "Monster_Hunter_Wilds",
+        "Monster_Hunter",
+        "Monster_Hunter",
+        "Monster_Hunter: World"
+      ],
+      "searches": [
+        {
+          "query": "Monster Hunter Wilds sales first three days",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Monster Hunter Wilds sold over eight million units in its first three days [1][2][3].",
+      "cited_sources": [
+        "Monster_Hunter_Wilds",
+        "Monster_Hunter_Wilds",
+        "Monster_Hunter"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "now-developer",
+      "category": "wiki_fact",
+      "question": "Who developed Monster Hunter Now?",
+      "expected_sources": [
+        "Monster_Hunter_Now"
+      ],
+      "retrieved": [
+        "Monster_Hunter_Now",
+        "Monster_Hunter_Now",
+        "Monster_Hunter_Outlanders",
+        "Monster_Hunter_Outlanders",
+        "Monster_Hunter_Wilds"
+      ],
+      "searches": [
+        {
+          "query": "Monster Hunter Now developer",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Monster Hunter Now was developed by Niantic and Capcom [1].",
+      "cited_sources": [
+        "Monster_Hunter_Now"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "outlanders-developer",
+      "category": "wiki_fact",
+      "question": "Which studio is developing Monster Hunter Outlanders?",
+      "expected_sources": [
+        "Monster_Hunter_Outlanders"
+      ],
+      "retrieved": [
+        "Monster_Hunter_Outlanders",
+        "Monster_Hunter_Outlanders",
+        "Monster_Hunter_(video_game)",
+        "Monster_Hunter_Outlanders",
+        "Monster_Hunter: World"
+      ],
+      "searches": [
+        {
+          "query": "Monster Hunter Outlanders developer studio",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Monster Hunter Outlanders is being developed by TiMi Studio Group [1].",
+      "cited_sources": [
+        "Monster_Hunter_Outlanders"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "wilds-release",
+      "category": "wiki_fact",
+      "question": "When was Monster Hunter Wilds released?",
+      "expected_sources": [
+        "Monster_Hunter_Wilds"
+      ],
+      "retrieved": [
+        "Monster_Hunter_Wilds",
+        "Monster_Hunter_Wilds",
+        "Monster_Hunter_(video_game)",
+        "Monster_Hunter_Wilds",
+        "Monster_Hunter"
+      ],
+      "searches": [
+        {
+          "query": "Monster Hunter Wilds release date",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Monster Hunter Wilds was released on February 28, 2025, for PlayStation 5, Windows, and Xbox Series X/S [1]. A Nintendo Switch 2 version is scheduled for release on December 4, 2026 [1].",
+      "cited_sources": [
+        "Monster_Hunter_Wilds"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "tri-planned-platform",
+      "category": "wiki_fact",
+      "question": "What console was Monster Hunter Tri originally planned for?",
+      "expected_sources": [
+        "Monster_Hunter_Tri"
+      ],
+      "retrieved": [
+        "Monster_Hunter_Tri",
+        "Monster_Hunter_(video_game)",
+        "Monster_Hunter_Tri",
+        "PlayStation_Vita",
+        "Monster_Hunter_Tri"
+      ],
+      "searches": [
+        {
+          "query": "Monster Hunter Tri originally planned for console",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Monster Hunter Tri was originally planned for the PlayStation 3 [1][2].",
+      "cited_sources": [
+        "Monster_Hunter_Tri",
+        "Monster_Hunter_(video_game)"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "stories-codeveloper",
+      "category": "wiki_fact",
+      "question": "Which company co-developed Monster Hunter Stories with Capcom?",
+      "expected_sources": [
+        "Monster_Hunter_Stories",
+        "Monster_Hunter_Stories_2: Wings_of_Ruin"
+      ],
+      "retrieved": [
+        "Monster_Hunter_Stories",
+        "Monster_Hunter_Stories_2: Wings_of_Ruin",
+        "Monster_Hunter_Stories_3: Twisted_Reflection",
+        "Monster_Hunter_Stories",
+        "Monster_Hunter_Outlanders"
+      ],
+      "searches": [
+        {
+          "query": "Monster Hunter Stories co-developed Capcom",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Marvelous [1].",
+      "cited_sources": [
+        "Monster_Hunter_Stories"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "switch-release",
+      "category": "wiki_fact",
+      "question": "When was the Nintendo Switch released?",
+      "expected_sources": [
+        "Nintendo_Switch"
+      ],
+      "retrieved": [
+        "Nintendo_Switch",
+        "Nintendo_Switch",
+        "Nintendo_3DS",
+        "Nintendo_Switch",
+        "Nintendo_Switch"
+      ],
+      "searches": [
+        {
+          "query": "Nintendo Switch release date",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "The Nintendo Switch was released on March 3, 2017 [1].",
+      "cited_sources": [
+        "Nintendo_Switch"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "psp-sales",
+      "category": "wiki_fact",
+      "question": "How many units did the PlayStation Portable sell?",
+      "expected_sources": [
+        "PlayStation_Portable"
+      ],
+      "retrieved": [
+        "PlayStation_Portable",
+        "PlayStation_Portable",
+        "PlayStation_Portable",
+        "PlayStation_Portable",
+        "PlayStation_Portable"
+      ],
+      "searches": [
+        {
+          "query": "PlayStation Portable units sold sales",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "The PlayStation Portable sold over 80 million units during its ten-year lifetime [5].",
+      "cited_sources": [
+        "PlayStation_Portable"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "rise-sales",
+      "category": "wiki_fact",
+      "question": "How many copies has Monster Hunter Rise sold?",
+      "expected_sources": [
+        "Monster_Hunter_Rise"
+      ],
+      "retrieved": [
+        "Monster_Hunter_Rise",
+        "Monster_Hunter_Rise",
+        "Monster_Hunter_Rise",
+        "Monster_Hunter",
+        "Monster_Hunter: World"
+      ],
+      "searches": [
+        {
+          "query": "Monster Hunter Rise sales copies",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Monster Hunter Rise has sold more than 20 million copies worldwide [3].",
+      "cited_sources": [
+        "Monster_Hunter_Rise"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "diary-developer",
+      "category": "wiki_fact",
+      "question": "Which company developed Monster Hunter Diary: Poka Poka Airou Village?",
+      "expected_sources": [
+        "Monster_Hunter_Diary"
+      ],
+      "retrieved": [
+        "Monster_Hunter_Diary",
+        "Monster_Hunter_Diary",
+        "Monster_Hunter",
+        "Rathalos",
+        "Rathalos"
+      ],
+      "searches": [
+        {
+          "query": "Monster Hunter Diary Poka Poka Airou Village developer",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Monster Hunter Diary: Poka Poka Airou Village was developed by FromSoftware [1].",
+      "cited_sources": [
+        "Monster_Hunter_Diary"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "legends-premiere",
+      "category": "wiki_fact",
+      "question": "Where did Monster Hunter: Legends of the Guild premiere?",
+      "expected_sources": [
+        "Monster_Hunter: Legends_of_the_Guild"
+      ],
+      "retrieved": [
+        "Monster_Hunter: Legends_of_the_Guild",
+        "Monster_Hunter: Legends_of_the_Guild",
+        "Monster_Hunter",
+        "Monster_Hunter",
+        "Monster_Hunter: Legends_of_the_Guild"
+      ],
+      "searches": [
+        {
+          "query": "Monster Hunter Legends of the Guild premiere",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Monster Hunter: Legends of the Guild premiered on Netflix [1].",
+      "cited_sources": [
+        "Monster_Hunter: Legends_of_the_Guild"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "iceborne-region",
+      "category": "wiki_fact",
+      "question": "In which new region is the Iceborne expansion set?",
+      "expected_sources": [
+        "Monster_Hunter: World",
+        "Monster_Hunter_World: Iceborne"
+      ],
+      "retrieved": [
+        "Monster_Hunter_World: Iceborne",
+        "Monster_Hunter_World: Iceborne",
+        "Monster_Hunter_World: Iceborne",
+        "Monster_Hunter_World: Iceborne",
+        "Beotodus"
+      ],
+      "searches": [
+        {
+          "query": "Monster Hunter World Iceborne new region",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Hoarfrost Reach [1]",
+      "cited_sources": [
+        "Monster_Hunter_World: Iceborne"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "azure-rathalos-weakness",
+      "category": "variant",
+      "question": "What is Azure Rathalos weakest to?",
+      "expected_sources": [
+        "Azure Rathalos"
+      ],
+      "retrieved": [
+        "Azure Rathalos",
+        "Rathalos",
+        "Silver Rathalos",
+        "Apex Rathalos",
+        "Dreadking Rathalos"
+      ],
+      "searches": [
+        {
+          "query": "Azure Rathalos weakness",
+          "corpus": "mh_wiki_monsters",
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Azure Rathalos is weakest to Dragon and Thunder [1].",
+      "cited_sources": [
+        "Azure Rathalos"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "silver-rathalos-weakness",
+      "category": "variant",
+      "question": "What is Silver Rathalos weakest to?",
+      "expected_sources": [
+        "Silver Rathalos"
+      ],
+      "retrieved": [
+        "Silver Rathalos",
+        "Silver Rathalos",
+        "Rathalos",
+        "Azure Rathalos",
+        "Dreadking Rathalos"
+      ],
+      "searches": [
+        {
+          "query": "Silver Rathalos weakness",
+          "corpus": "mh_wiki_monsters",
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Silver Rathalos is weakest to Thunder and Water [2].",
+      "cited_sources": [
+        "Silver Rathalos"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "stygian-zinogre-element",
+      "category": "variant",
+      "question": "What element does Stygian Zinogre use?",
+      "expected_sources": [
+        "Stygian Zinogre"
+      ],
+      "retrieved": [
+        "Stygian Zinogre",
+        "Stygian Zinogre",
+        "Stygian Zinogre",
+        "Stygian Zinogre",
+        "Stygian Zinogre"
+      ],
+      "searches": [
+        {
+          "query": "Stygian Zinogre element",
+          "corpus": "mh_wiki_monsters",
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Stygian Zinogre uses the Dragon element [3].",
+      "cited_sources": [
+        "Stygian Zinogre"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "pink-rathian-alias",
+      "category": "variant",
+      "question": "What is Pink Rathian's Japanese alias?",
+      "expected_sources": [
+        "Pink Rathian"
+      ],
+      "retrieved": [
+        "Pink Rathian",
+        "Rathian",
+        "Apex Rathian",
+        "Dreadqueen Rathian",
+        "Pink Rathian"
+      ],
+      "searches": [
+        {
+          "query": "Pink Rathian Japanese alias",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Pink Rathian's Japanese alias is Cherry Blossom Fire Wyvern (桜火竜) [1].",
+      "cited_sources": [
+        "Pink Rathian"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "raging-brachydios-debut",
+      "category": "variant",
+      "question": "Which game introduced Raging Brachydios?",
+      "expected_sources": [
+        "Raging Brachydios"
+      ],
+      "retrieved": [
+        "Raging Brachydios",
+        "Brachydios",
+        "Brachydios",
+        "Brachydios",
+        "Brachydios"
+      ],
+      "searches": [
+        {
+          "query": "Raging Brachydios debut game",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Raging Brachydios was introduced in Monster Hunter 4 Ultimate [1].",
+      "cited_sources": [
+        "Raging Brachydios"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "ivory-lagiacrus-weakness",
+      "category": "variant",
+      "question": "What is Ivory Lagiacrus weak to?",
+      "expected_sources": [
+        "Ivory Lagiacrus"
+      ],
+      "retrieved": [
+        "Ivory Lagiacrus",
+        "Lagiacrus",
+        "Abyssal Lagiacrus",
+        "Ivory Lagiacrus",
+        "Ivory Lagiacrus"
+      ],
+      "searches": [
+        {
+          "query": "Ivory Lagiacrus weakness",
+          "corpus": "mh_wiki_monsters",
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Ivory Lagiacrus is weakest to Fire and Dragon [1].",
+      "cited_sources": [
+        "Ivory Lagiacrus"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "thunder-weak-comparison",
+      "category": "cross_page",
+      "question": "Which is weak to Thunder: Zinogre or Nargacuga?",
+      "expected_sources": [
+        "Nargacuga",
+        "Zinogre"
+      ],
+      "retrieved": [
+        "Stygian Zinogre",
+        "Zinogre",
+        "Thunderlord Zinogre",
+        "Apex Zinogre",
+        "Howling Zinogre",
+        "Nargacuga",
+        "Silverwind Nargacuga",
+        "Green Nargacuga",
+        "Blinking Nargacuga",
+        "Omega Micros"
+      ],
+      "searches": [
+        {
+          "query": "Zinogre weakness Thunder",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "query": "Nargacuga weakness Thunder",
+          "corpus": null,
+          "passages": [
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "all_sources_found": true,
+      "answer": "Nargacuga is weak to Thunder [6].",
+      "cited_sources": [
+        "Nargacuga"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "tigrex-nargacuga-debut",
+      "category": "cross_page",
+      "question": "Which was introduced first, Tigrex or Nargacuga?",
+      "expected_sources": [
+        "Nargacuga",
+        "Tigrex"
+      ],
+      "retrieved": [
+        "Tigrex",
+        "Tigrex",
+        "Tigrex",
+        "Tigrex",
+        "Tigrex",
+        "Nargacuga",
+        "Nargacuga",
+        "Nargacuga",
+        "Nargacuga",
+        "Nargacuga"
+      ],
+      "searches": [
+        {
+          "query": "Tigrex debut game",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "query": "Nargacuga debut game",
+          "corpus": null,
+          "passages": [
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        }
+      ],
+      "llm_calls": 3,
+      "found_expected": true,
+      "all_sources_found": true,
+      "answer": "Tigrex was introduced first, debuting in Monster Hunter Freedom 2 [4], while Nargacuga was introduced later in Monster Hunter Freedom Unite [7].",
+      "cited_sources": [
+        "Tigrex",
+        "Nargacuga"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "shared-element",
+      "category": "cross_page",
+      "question": "What element do both Rajang and Zinogre use?",
+      "expected_sources": [
+        "Rajang",
+        "Zinogre"
+      ],
+      "retrieved": [
+        "Rajang",
+        "Rajang",
+        "Rajang",
+        "Furious Rajang",
+        "Furious Rajang",
+        "Zinogre",
+        "Zinogre",
+        "Thunderlord Zinogre",
+        "Stygian Zinogre",
+        "Apex Zinogre"
+      ],
+      "searches": [
+        {
+          "query": "Rajang element",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "query": "Zinogre element",
+          "corpus": null,
+          "passages": [
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "all_sources_found": true,
+      "answer": "Both Rajang and Zinogre use the Thunder element [2][6].",
+      "cited_sources": [
+        "Rajang",
+        "Zinogre"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "first-console-japan-release",
+      "category": "cross_page",
+      "question": "The first Monster Hunter game was released on which console, and when did that console launch in Japan?",
+      "expected_sources": [
+        "Monster_Hunter_(video_game)",
+        "PlayStation_2"
+      ],
+      "retrieved": [
+        "Monster_Hunter_(video_game)",
+        "Monster_Hunter",
+        "Monster_Hunter",
+        "Monster_Hunter_Wilds",
+        "Monster_Hunter",
+        "PlayStation_2",
+        "PlayStation_2",
+        "PlayStation_2",
+        "PlayStation_2",
+        "PlayStation_2"
+      ],
+      "searches": [
+        {
+          "query": "Monster Hunter first game release console",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "query": "PlayStation 2 release date Japan",
+          "corpus": null,
+          "passages": [
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        }
+      ],
+      "llm_calls": 3,
+      "found_expected": true,
+      "all_sources_found": true,
+      "answer": "The first Monster Hunter game was released on the PlayStation 2 [1], which launched in Japan on March 4, 2000 [6][7].",
+      "cited_sources": [
+        "Monster_Hunter_(video_game)",
+        "PlayStation_2",
+        "PlayStation_2"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "fu-console-sales",
+      "category": "multi_hop",
+      "question": "Monster Hunter Freedom Unite was released on which handheld, and how many units did that handheld sell?",
+      "expected_sources": [
+        "Monster_Hunter_Freedom_Unite",
+        "PlayStation_Portable"
+      ],
+      "retrieved": [
+        "Monster_Hunter_Freedom_Unite",
+        "Monster_Hunter_Freedom_2",
+        "Monster_Hunter",
+        "Monster_Hunter_Freedom_Unite",
+        "Monster_Hunter_Freedom",
+        "PlayStation_Portable",
+        "PlayStation_Portable",
+        "PlayStation_Portable",
+        "PlayStation_Portable",
+        "PlayStation_Portable"
+      ],
+      "searches": [
+        {
+          "query": "Monster Hunter Freedom Unite handheld",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "query": "PlayStation Portable sales units",
+          "corpus": null,
+          "passages": [
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        }
+      ],
+      "llm_calls": 3,
+      "found_expected": true,
+      "all_sources_found": true,
+      "answer": "Monster Hunter Freedom Unite was released for the PlayStation Portable [1], which sold over 80 million units during its lifetime [9].",
+      "cited_sources": [
+        "Monster_Hunter_Freedom_Unite",
+        "PlayStation_Portable"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "zinogre-debut-console",
+      "category": "multi_hop",
+      "question": "Zinogre was introduced in which game, and which console was that game released for?",
+      "expected_sources": [
+        "Monster_Hunter_Portable_3rd",
+        "Zinogre"
+      ],
+      "retrieved": [
+        "Zinogre",
+        "Zinogre",
+        "Zinogre",
+        "Zinogre",
+        "Zinogre",
+        "Monster_Hunter_Portable_3rd",
+        "Monster_Hunter_Portable_3rd",
+        "Monster_Hunter_Portable_3rd",
+        "Monster_Hunter_Tri",
+        "Monster_Hunter"
+      ],
+      "searches": [
+        {
+          "query": "Zinogre debut game console",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "query": "Monster Hunter Portable 3rd console",
+          "corpus": null,
+          "passages": [
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        }
+      ],
+      "llm_calls": 3,
+      "found_expected": true,
+      "all_sources_found": true,
+      "answer": "Zinogre was introduced in Monster Hunter Portable 3rd [1], which was released for the PlayStation Portable [6].",
+      "cited_sources": [
+        "Zinogre",
+        "Monster_Hunter_Portable_3rd"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "nergigante-game-sales",
+      "category": "multi_hop",
+      "question": "How many copies has the game that introduced Nergigante shipped?",
+      "expected_sources": [
+        "Monster_Hunter: World",
+        "Nergigante"
+      ],
+      "retrieved": [
+        "Nergigante",
+        "Nergigante",
+        "Nergigante",
+        "Nergigante",
+        "Nergigante",
+        "Monster_Hunter: World",
+        "Monster_Hunter: World",
+        "Monster_Hunter: World",
+        "Monster_Hunter: World",
+        "Monster_Hunter: World"
+      ],
+      "searches": [
+        {
+          "query": "Nergigante debut game",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "query": "Monster Hunter World copies shipped sales",
+          "corpus": "wikipedia_pages",
+          "passages": [
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        }
+      ],
+      "llm_calls": 3,
+      "found_expected": true,
+      "all_sources_found": true,
+      "answer": "Monster Hunter: World, the game that introduced Nergigante [2], has shipped over 30 million copies [7].",
+      "cited_sources": [
+        "Nergigante",
+        "Monster_Hunter: World"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "malzeno-base-console",
+      "category": "multi_hop",
+      "question": "Malzeno debuted in an expansion. Which console was that expansion's base game first released on?",
+      "expected_sources": [
+        "Malzeno",
+        "Monster_Hunter_Rise"
+      ],
+      "retrieved": [
+        "Primordial Malzeno",
+        "Malzeno",
+        "Malzeno",
+        "Malzeno",
+        "Primordial Malzeno",
+        "Monster_Hunter_Rise",
+        "Monster_Hunter_Rise",
+        "Monster_Hunter_Rise",
+        "Monster_Hunter_(video_game)",
+        "Monster_Hunter: World"
+      ],
+      "searches": [
+        {
+          "query": "Malzeno debut game",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "query": "Monster Hunter Rise release console wikipedia",
+          "corpus": null,
+          "passages": [
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        }
+      ],
+      "llm_calls": 3,
+      "found_expected": true,
+      "all_sources_found": true,
+      "answer": "Nintendo Switch [7][9]",
+      "cited_sources": [
+        "Monster_Hunter_Rise",
+        "Monster_Hunter_(video_game)"
+      ],
+      "answer_correct": false,
+      "citation_correct": true
+    },
+    {
+      "id": "velkhana-expansion-region",
+      "category": "multi_hop",
+      "question": "Velkhana debuted in an expansion pack. Which region is that expansion's story set in, and how many copies did it sell on release?",
+      "expected_sources": [
+        "Monster_Hunter_World: Iceborne",
+        "Velkhana"
+      ],
+      "retrieved": [
+        "Monster_Hunter_World: Iceborne",
+        "Velkhana",
+        "Velkhana",
+        "Velkhana",
+        "Velkhana",
+        "Monster_Hunter_World: Iceborne",
+        "Monster_Hunter: World",
+        "Monster_Hunter_World: Iceborne",
+        "Monster_Hunter: World",
+        "Monster_Hunter"
+      ],
+      "searches": [
+        {
+          "query": "Velkhana debut expansion pack",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "query": "Monster Hunter World Iceborne sales",
+          "corpus": null,
+          "passages": [
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        }
+      ],
+      "llm_calls": 3,
+      "found_expected": true,
+      "all_sources_found": true,
+      "answer": "The expansion is set in the Hoarfrost Reach, and it sold more than 2.5 million copies a week after its release [1][6][8].",
+      "cited_sources": [
+        "Monster_Hunter_World: Iceborne",
+        "Monster_Hunter_World: Iceborne",
+        "Monster_Hunter_World: Iceborne"
+      ],
+      "answer_correct": false,
+      "citation_correct": true
+    },
+    {
+      "id": "first-game-console-maker",
+      "category": "multi_hop",
+      "question": "Which company developed the console that the first Monster Hunter game was released on?",
+      "expected_sources": [
+        "Monster_Hunter_(video_game)",
+        "PlayStation_2"
+      ],
+      "retrieved": [
+        "Monster_Hunter_(video_game)",
+        "Monster_Hunter_Wilds",
+        "Monster_Hunter_Tri",
+        "Monster_Hunter: World",
+        "Monster_Hunter_(video_game)",
+        "PlayStation_2",
+        "PlayStation_2",
+        "PlayStation_2",
+        "PlayStation_2",
+        "PlayStation_(console)"
+      ],
+      "searches": [
+        {
+          "query": "Monster Hunter release date developer console",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "query": "PlayStation 2 manufacturer developer company",
+          "corpus": null,
+          "passages": [
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        }
+      ],
+      "llm_calls": 3,
+      "found_expected": true,
+      "all_sources_found": true,
+      "answer": "Sony [6]",
+      "cited_sources": [
+        "PlayStation_2"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "arkveld-game-release",
+      "category": "multi_hop",
+      "question": "On what date was the game that introduced Arkveld released?",
+      "expected_sources": [
+        "Arkveld",
+        "Monster_Hunter_Wilds"
+      ],
+      "retrieved": [
+        "Guardian Arkveld",
+        "Arkveld",
+        "Arkveld",
+        "Arkveld",
+        "Guardian Arkveld",
+        "Monster_Hunter_Wilds",
+        "Monster_Hunter_Wilds",
+        "Monster_Hunter_(video_game)",
+        "Monster_Hunter_Wilds",
+        "Monster_Hunter"
+      ],
+      "searches": [
+        {
+          "query": "Arkveld debut game",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "query": "Monster Hunter Wilds release date",
+          "corpus": "wikipedia_pages",
+          "passages": [
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        }
+      ],
+      "llm_calls": 3,
+      "found_expected": true,
+      "all_sources_found": true,
+      "answer": "Monster Hunter Wilds, the game that introduced Arkveld, was released on February 28, 2025 [1][6].",
+      "cited_sources": [
+        "Guardian Arkveld",
+        "Monster_Hunter_Wilds"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "gore-magala-adult-weakness",
+      "category": "multi_hop",
+      "question": "Gore Magala is the juvenile form of which Elder Dragon, and what is that adult form weakest to?",
+      "expected_sources": [
+        "Gore Magala",
+        "Shagaru Magala"
+      ],
+      "retrieved": [
+        "Gore Magala",
+        "Chaotic Gore Magala",
+        "Gore Magala",
+        "Risen Shagaru Magala",
+        "Shagaru Magala",
+        "Shagaru Magala",
+        "Shagaru Magala"
+      ],
+      "searches": [
+        {
+          "query": "Gore Magala adult form weak to",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "query": "Shagaru Magala weakest to",
+          "corpus": null,
+          "passages": [
+            6,
+            4,
+            1,
+            2,
+            7
+          ]
+        }
+      ],
+      "llm_calls": 3,
+      "found_expected": true,
+      "all_sources_found": true,
+      "answer": "Gore Magala is the juvenile form of the Shagaru Magala, and that adult form is weakest to Dragon [5][6].",
+      "cited_sources": [
+        "Shagaru Magala",
+        "Shagaru Magala"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "handheld-sales-comparison",
+      "category": "comparison",
+      "question": "Which handheld sold more units, the PlayStation Portable or the Nintendo 3DS family, and how many did each sell?",
+      "expected_sources": [
+        "Nintendo_3DS",
+        "PlayStation_Portable"
+      ],
+      "retrieved": [
+        "Nintendo_3DS",
+        "Nintendo_3DS",
+        "PlayStation_Vita",
+        "PlayStation_Vita",
+        "PlayStation_Portable",
+        "PlayStation_Portable",
+        "PlayStation_Portable",
+        "PlayStation_2"
+      ],
+      "searches": [
+        {
+          "query": "PlayStation Portable sales Nintendo 3DS family sales",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "query": "PlayStation Portable total lifetime sales units",
+          "corpus": null,
+          "passages": [
+            6,
+            5,
+            7,
+            4,
+            8
+          ]
+        }
+      ],
+      "llm_calls": 3,
+      "found_expected": true,
+      "all_sources_found": true,
+      "answer": "The PlayStation Portable sold more units than the Nintendo 3DS family. The PlayStation Portable sold over 80 million units [6], while the Nintendo 3DS family of systems sold 75.94 million units [2].",
+      "cited_sources": [
+        "PlayStation_Portable",
+        "Nintendo_3DS"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "mh4-vs-generations-japan",
+      "category": "comparison",
+      "question": "Which was released first in Japan, Monster Hunter 4 or Monster Hunter Generations, and in what year?",
+      "expected_sources": [
+        "Monster_Hunter_4",
+        "Monster_Hunter_Generations"
+      ],
+      "retrieved": [
+        "Monster_Hunter_4",
+        "Monster_Hunter_(video_game)",
+        "Monster_Hunter_Tri",
+        "Monster_Hunter_4",
+        "Monster_Hunter_4",
+        "Monster_Hunter_Generations",
+        "Monster_Hunter_Generations",
+        "Monster_Hunter_Generations",
+        "Monster_Hunter_Generations",
+        "Monster_Hunter_Stories"
+      ],
+      "searches": [
+        {
+          "query": "Monster Hunter 4 release date Japan",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "query": "Monster Hunter Generations release date Japan",
+          "corpus": null,
+          "passages": [
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        }
+      ],
+      "llm_calls": 3,
+      "found_expected": true,
+      "all_sources_found": true,
+      "answer": "Monster Hunter 4 was released first in Japan, in the year 2013 [1].",
+      "cited_sources": [
+        "Monster_Hunter_4"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "world-vs-rise-sales",
+      "category": "comparison",
+      "question": "Which has sold more copies, Monster Hunter: World or Monster Hunter Rise, and how many has each sold?",
+      "expected_sources": [
+        "Monster_Hunter: World",
+        "Monster_Hunter_Rise"
+      ],
+      "retrieved": [
+        "Monster_Hunter: World",
+        "Monster_Hunter: World",
+        "Monster_Hunter: World",
+        "Monster_Hunter: World",
+        "Monster_Hunter: World",
+        "Monster_Hunter_Rise",
+        "Monster_Hunter_Rise",
+        "Monster_Hunter_Rise",
+        "Monster_Hunter",
+        "Monster_Hunter"
+      ],
+      "searches": [
+        {
+          "query": "Monster Hunter World sales",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "query": "Monster Hunter Rise sales",
+          "corpus": null,
+          "passages": [
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        }
+      ],
+      "llm_calls": 3,
+      "found_expected": true,
+      "all_sources_found": true,
+      "answer": "Monster Hunter: World has sold more copies than Monster Hunter Rise [4][8]. Monster Hunter: World has over 30 million copies shipped [4], while Monster Hunter Rise has sold more than 20 million copies [8].",
+      "cited_sources": [
+        "Monster_Hunter: World",
+        "Monster_Hunter_Rise"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "ps2-to-first-game-gap",
+      "category": "comparison",
+      "question": "How many years after the PlayStation 2 launched in Japan was the first Monster Hunter game released there?",
+      "expected_sources": [
+        "Monster_Hunter_(video_game)",
+        "PlayStation_2"
+      ],
+      "retrieved": [
+        "PlayStation_2",
+        "PlayStation_2",
+        "PlayStation_2",
+        "PlayStation_2",
+        "PlayStation_2",
+        "Monster_Hunter_(video_game)",
+        "Monster_Hunter_Generations",
+        "Monster_Hunter_Stories",
+        "Monster_Hunter_4",
+        "Monster_Hunter_Stories",
+        "Monster_Hunter_2",
+        "Monster_Hunter_(video_game)",
+        "Monster_Hunter_(video_game)",
+        "Monster_Hunter_Freedom_Unite",
+        "Monster_Hunter",
+        "Monster_Hunter"
+      ],
+      "searches": [
+        {
+          "query": "PlayStation 2 launch date Japan",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "query": "Monster Hunter release date Japan",
+          "corpus": null,
+          "passages": [
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        },
+        {
+          "query": "Monster Hunter PlayStation 2 exact release date Japan",
+          "corpus": null,
+          "passages": [
+            6,
+            11,
+            12,
+            13,
+            14
+          ]
+        },
+        {
+          "query": "\"Monster Hunter\" \"March 2004\" release date Japan",
+          "corpus": null,
+          "passages": [
+            6,
+            15,
+            16,
+            13,
+            12
+          ]
+        }
+      ],
+      "llm_calls": 5,
+      "found_expected": true,
+      "all_sources_found": true,
+      "answer": "The first Monster Hunter game was released in Japan in March 2004 [6], which was approximately 4 years after the PlayStation 2 launched there on March 4, 2000 [1].",
+      "cited_sources": [
+        "Monster_Hunter_(video_game)",
+        "PlayStation_2"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "rioreusu",
+      "category": "keyword",
+      "question": "Which monster is called Rioreusu in Japanese?",
+      "expected_sources": [
+        "Rathalos"
+      ],
+      "retrieved": [
+        "Rathalos",
+        "Rathalos",
+        "Zenith Rathalos",
+        "Dreadking Rathalos",
+        "Apex Rathalos"
+      ],
+      "searches": [
+        {
+          "query": "Rioreusu Japanese monster hunter",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Rathalos is called Rioreusu in Japanese [1][2].",
+      "cited_sources": [
+        "Rathalos",
+        "Rathalos"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "tamamitsune",
+      "category": "keyword",
+      "question": "Which monster is known in Japan as Tamamitsune?",
+      "expected_sources": [
+        "Mizutsune"
+      ],
+      "retrieved": [
+        "Mizutsune",
+        "Soulseer Mizutsune",
+        "Apex Mizutsune",
+        "Violet Mizutsune",
+        "Monster_Hunter_Rise"
+      ],
+      "searches": [
+        {
+          "query": "Tamamitsune monster hunter",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Mizutsune [1].",
+      "cited_sources": [
+        "Mizutsune"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "arushuberudo",
+      "category": "keyword",
+      "question": "Which monster's Japanese name is Arushuberudo?",
+      "expected_sources": [
+        "Arkveld"
+      ],
+      "retrieved": [
+        "Arkveld",
+        "Guardian Arkveld",
+        "Araketa",
+        "Amatsu",
+        "Redhelm Arzuros"
+      ],
+      "searches": [
+        {
+          "query": "Arushuberudo Japanese name monster",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Arkveld [1]",
+      "cited_sources": [
+        "Arkveld"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "nerugigante",
+      "category": "keyword",
+      "question": "Which monster is known in Japan as Nerugigante?",
+      "expected_sources": [
+        "Nergigante"
+      ],
+      "retrieved": [
+        "Nergigante",
+        "Ruiner Nergigante",
+        "Nergigante",
+        "Nergigante",
+        "Nergigante"
+      ],
+      "searches": [
+        {
+          "query": "Nerugigante",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Nergigante is known in Japan as Nerugigante [1].",
+      "cited_sources": [
+        "Nergigante"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "rathalos-urgent-quest",
+      "category": "keyword",
+      "question": "Which 2-star Urgent Quest first lets you properly hunt Rathalos?",
+      "expected_sources": [
+        "Rathalos"
+      ],
+      "retrieved": [
+        "Rathalos",
+        "Rathalos",
+        "Rathalos",
+        "Rathalos",
+        "Azure Rathalos"
+      ],
+      "searches": [
+        {
+          "query": "Rathalos 2 star Urgent Quest",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Slay the Rathalos! [1][3]",
+      "cited_sources": [
+        "Rathalos",
+        "Rathalos"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "gore-magala-gender",
+      "category": "lost_content",
+      "question": "What is the gender of Gore Magala, and why?",
+      "expected_sources": [
+        "Gore Magala"
+      ],
+      "retrieved": [
+        "Gore Magala",
+        "Shagaru Magala",
+        "Kulve Taroth",
+        "Gore Magala",
+        "Gore Magala"
+      ],
+      "searches": [
+        {
+          "query": "Gore Magala gender",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Gore Magala is genderless [1] because of its parasitic method of reproduction [1][4]. The species lacks any breeding behavior and has no determinable sex [2].",
+      "cited_sources": [
+        "Gore Magala",
+        "Gore Magala",
+        "Shagaru Magala"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "baggi-reputation",
+      "category": "lost_content",
+      "question": "What is the Baggi well-regarded for?",
+      "expected_sources": [
+        "Baggi"
+      ],
+      "retrieved": [
+        "Baggi",
+        "Baggi",
+        "Baggi",
+        "Baggi",
+        "Baggi"
+      ],
+      "searches": [
+        {
+          "query": "Baggi",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "The Baggi is well-regarded for its high degree of intelligence.",
+      "cited_sources": [],
+      "answer_correct": true,
+      "citation_correct": false
+    },
+    {
+      "id": "bleem-shutdown",
+      "category": "lost_content",
+      "question": "When was Bleem! forced to shut down?",
+      "expected_sources": [
+        "PlayStation_(console)"
+      ],
+      "retrieved": [
+        "PlayStation_(console)",
+        "PlayStation_(console)",
+        "Monster_Hunter: World",
+        "PlayStation_Vita",
+        "PlayStation"
+      ],
+      "searches": [
+        {
+          "query": "Bleem forced to shut down release date",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "found_expected": true,
+      "answer": "Bleem! was forced to shut down in November 2001 [1].",
+      "cited_sources": [
+        "PlayStation_(console)"
+      ],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "unanswerable-rathalos-health",
+      "category": "unanswerable",
+      "question": "How much health does Rathalos have in Monster Hunter: World?",
+      "expected_sources": [],
+      "retrieved": [
+        "Azure Rathalos",
+        "Rathalos",
+        "Rathalos",
+        "Monster_Hunter: World",
+        "Rathalos"
+      ],
+      "searches": [
+        {
+          "query": "Rathalos health Monster Hunter World",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "answer": "I don't know",
+      "cited_sources": [],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "unanswerable-rise-composer",
+      "category": "unanswerable",
+      "question": "Who composed the music for Monster Hunter Rise?",
+      "expected_sources": [],
+      "retrieved": [
+        "Zinogre",
+        "Amatsu",
+        "Bazelgeuse",
+        "Espinas",
+        "Mizutsune",
+        "Ceadeus",
+        "Monster_Hunter_(video_game)",
+        "Monster_Hunter_Rise",
+        "Monster_Hunter_Rise",
+        "Monster_Hunter: World",
+        "Monster_Hunter"
+      ],
+      "searches": [
+        {
+          "query": "Monster Hunter Rise music composer",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "query": "Monster Hunter Rise wikipedia music composer",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            6,
+            5
+          ]
+        },
+        {
+          "query": "Monster Hunter Rise composer",
+          "corpus": "wikipedia_pages",
+          "passages": [
+            7,
+            8,
+            9,
+            10,
+            11
+          ]
+        }
+      ],
+      "llm_calls": 4,
+      "answer": "I don't know",
+      "cited_sources": [],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "unanswerable-handler-voice",
+      "category": "unanswerable",
+      "question": "Who voices the Handler in Monster Hunter: World?",
+      "expected_sources": [],
+      "retrieved": [
+        "Monster_Hunter_Rise",
+        "Monster_Hunter: World",
+        "Monster_Hunter: World",
+        "Monster_Hunter_Wilds",
+        "Monster_Hunter: World",
+        "Monster_Hunter_Rise",
+        "Monster_Hunter: World"
+      ],
+      "searches": [
+        {
+          "query": "Monster Hunter World Handler voice actor",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "query": "Monster Hunter World Handler voice actor English Japanese",
+          "corpus": null,
+          "passages": [
+            1,
+            3,
+            2,
+            6,
+            7
+          ]
+        }
+      ],
+      "llm_calls": 3,
+      "answer": "I don't know.",
+      "cited_sources": [],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "unanswerable-zinogre-height",
+      "category": "unanswerable",
+      "question": "How tall is a Zinogre in centimetres?",
+      "expected_sources": [],
+      "retrieved": [
+        "Zinogre",
+        "Zinogre",
+        "Stygian Zinogre",
+        "Zinogre",
+        "Thunderlord Zinogre",
+        "Stygian Zinogre",
+        "Zinogre"
+      ],
+      "searches": [
+        {
+          "query": "Zinogre height centimeters",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "query": "Zinogre height",
+          "corpus": null,
+          "passages": [
+            6,
+            1,
+            2,
+            7,
+            3
+          ]
+        }
+      ],
+      "llm_calls": 3,
+      "answer": "I don't know",
+      "cited_sources": [],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "oos-capital",
+      "category": "out_of_scope",
+      "question": "What is the capital of Australia?",
+      "expected_sources": [],
+      "retrieved": [
+        "Monster_Hunter: World",
+        "Nintendo_3DS",
+        "PlayStation_Portable",
+        "Nintendo_3DS",
+        "Nintendo_Switch"
+      ],
+      "searches": [
+        {
+          "query": "capital of Australia",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "answer": "I don't know",
+      "cited_sources": [],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "oos-film-director",
+      "category": "out_of_scope",
+      "question": "Who directed the film Jurassic Park?",
+      "expected_sources": [],
+      "retrieved": [
+        "Monster_Hunter",
+        "Monster_Hunter",
+        "Great Maccao",
+        "Monster_Hunter: Legends_of_the_Guild",
+        "Nargacuga"
+      ],
+      "searches": [
+        {
+          "query": "Jurassic Park film director",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "answer": "I don't know",
+      "cited_sources": [],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "oos-rugby",
+      "category": "out_of_scope",
+      "question": "How many players are on a rugby union team?",
+      "expected_sources": [],
+      "retrieved": [
+        "Monster_Hunter: World",
+        "Monster_Hunter_Freedom",
+        "Monster_Hunter: World",
+        "Molten Tigrex",
+        "Safi'jiiva"
+      ],
+      "searches": [
+        {
+          "query": "rugby union team players",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "llm_calls": 2,
+      "answer": "I don't know",
+      "cited_sources": [],
+      "answer_correct": true,
+      "citation_correct": true
+    },
+    {
+      "id": "oos-elden-ring",
+      "category": "out_of_scope",
+      "question": "How many copies has Elden Ring sold?",
+      "expected_sources": [],
+      "retrieved": [
+        "List_of_best-selling_video_games",
+        "List_of_best-selling_video_games",
+        "Monster_Hunter_Rise",
+        "Monster_Hunter: World",
+        "Monster_Hunter: World",
+        "Monster_Hunter_World: Iceborne"
+      ],
+      "searches": [
+        {
+          "query": "Elden Ring sales copies",
+          "corpus": null,
+          "passages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "query": "Elden Ring sold copies wikipedia",
+          "corpus": null,
+          "passages": [
+            1,
+            3,
+            4,
+            2,
+            6
+          ]
+        }
+      ],
+      "llm_calls": 3,
+      "answer": "I do not know.",
+      "cited_sources": [],
+      "answer_correct": true,
+      "citation_correct": true
+    }
+  ]
+}
