@@ -41,7 +41,10 @@ def print_retrieval(candidate_retriever, reranker, question):
     is embedded once.
     """
     candidates = candidate_retriever.invoke(question)
-    reranked = reranker.compress_documents(candidates, question) if candidates else []
+    if candidates:
+        reranked = reranker.compress_documents(candidates, question)
+    else:
+        []
 
     kind = "vector + keyword, fused" if HYBRID_SEARCH else "vector"
     print(f"\nCandidates top {RERANK_K} of {len(candidates)} ({kind}):")
