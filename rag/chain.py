@@ -6,7 +6,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable, RunnableParallel, RunnablePassthrough
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-from .config import LLM_MODEL, LLM_TEMPERATURE
+from .config import LLM_MODEL
 
 # Kept flush-left: indentation inside the string would be sent to the model on every line
 PROMPT_TEMPLATE = """\
